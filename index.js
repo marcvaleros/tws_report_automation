@@ -22,58 +22,48 @@ var rcsdk = new RC_SDK({
 });
 
 var platform = rcsdk.platform();
+platform.login({'jwt': process.env.RC_JWT});
 
-/* Authenticate a user using a personal JWT token */
-const authenticate = async () => {
-  try { 
-    await platform.login({'jwt': process.env.RC_JWT});
+platform.on(platform.events.loginSuccess, function(e){
+  get_call_logs();
+});
 
-    platform.on(platform.events.loginSuccess, function(e){
-        read_user_calllog();
-    });
+platform.on(platform.events.loginError, function(e){
+  console.log("Unable to authenticate to platform. Check credentials.", e.message)
+  process.exit(1)
+});
 
-    platform.on(platform.events.loginError, function(e){
-        console.log("Unable to authenticate to platform. Check credentials.", e.message)
-        process.exit(1)
-    });
-        
-    
-    console.log("Successfully Authenticated with JWT");
-  } catch (error) {
-    console.log('Error during JWT authentication:', error);
-  }
-}
 
-const read_user_calllog = async () => {
+const get_call_logs = async () => {
   try {
-    let queryParams = {
-      
-    }
-    const response = await platform.get("/restapi/v1.0/account/~/extension/~/call-log");
-    return response;
+    // Fetch calls with automatic recordings
+    const queryParams = {
+      recordingType: 'Automatic',
+      direction: 'Outbound'
+    };
+
+    const response = await platform.get("/restapi/v1.0/account/~/extension/~/call-log", queryParams);
+    const callLogs = await response.json();
+
+    console.log(JSON.stringify(callLogs,null,2));
     
+    const recordings = callLogs.records.filter(call => call.recording && call.recording.contentUri);
+    
+    // Output the recordings
+    recordings.forEach(recording => {
+      console.log(`Call ID: ${recording.id}`);
+      console.log(`Recording URL: ${recording.recording.contentUri}`);
+      console.log('---');
+    });
+       
   } catch (error) {
-    
+    console.log('Error retrieving company call logs:', error);
   }
 }
-
-// try {
-//   var resp = await platform.post('/restapi/v1.0/account/~/extension/~/ring-out', {
-//     'from': { 'phoneNumber': "<YOUR RINGCENTRAL PHONE NUMBER>" },
-//     'to':   { 'phoneNumber': "<THE PHONE NUMBER YOU ARE CALLING" },
-//     'playPrompt': false
-//   })
-//   var jsonObj = await resp.json()
-//   console.log("Call placed. Call status: " + jsonObj.status.callStatus)
-// } catch (e) {
-//   console.log("Unable to place a ring-out call.", e.message)
-// }
 
 
 app.listen(port, () =>{
   console.log(`Server is running on port ${port}`);
 })
-
-authenticate();
 
 
