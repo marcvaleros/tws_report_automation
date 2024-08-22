@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const { getUploadURL } = require('./slack');
 
 
 //create a server 
@@ -42,20 +43,14 @@ const get_call_logs = async () => {
       direction: 'Outbound'
     };
 
-    const response = await platform.get("/restapi/v1.0/account/~/extension/~/call-log", queryParams);
+    const response = await platform.get("/restapi/v1.0/account/~/extension/~/call-log/APwRntOK8Uns1o1A", queryParams); // sample recording
+    // const response = await platform.get("/restapi/v1.0/account/~/extension/~/call-log", queryParams);
     const callLogs = await response.json();
 
-    console.log(JSON.stringify(callLogs,null,2));
+    // console.log(JSON.stringify(callLogs,null,2));
     
-    const recordings = callLogs.records.filter(call => call.recording && call.recording.contentUri);
+    getUploadURL(callLogs.recording, platform);  // gets the data from the url and upload them to slack 
     
-    // Output the recordings
-    recordings.forEach(recording => {
-      console.log(`Call ID: ${recording.id}`);
-      console.log(`Recording URL: ${recording.recording.contentUri}`);
-      console.log('---');
-    });
-       
   } catch (error) {
     console.log('Error retrieving company call logs:', error);
   }
