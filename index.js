@@ -38,15 +38,16 @@ platform.on(platform.events.loginError, function(e){
 
 //create webhook subscription
 
-app.post('/webhook', (res,req) => {
+app.post('/webhook', (req,res) => {
   const event = req.body;
+  console.log(event);
+  
   if(event && event.event && event.event.includes('telephony/sessions')){
     console.log("Call ended event received:", event);
-    
   }
   
-  res.status(200).send("OK");
-})
+  res.status(200).send('OK');
+});
 
 
 const checkAndCreateSubscription = async () => {
