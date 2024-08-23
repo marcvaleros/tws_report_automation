@@ -3,26 +3,20 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 
-// const getUploadURL = async (url, companyName, dot, user_name, phone,companyId, duration) => {
-const getUploadURL = async (record, platform) => {
+// const uploadFileToSlack = async (url, companyName, dot, user_name, phone,companyId, duration) => {
+const uploadFileToSlack = async (callLogs, platform, hb) => {
   try {
 
-    console.log(JSON.stringify(record,null,2));
+    const record = callLogs.recording;
+    // console.log(JSON.stringify(record,null,2));
     
-    // Fetch the file from the URL
     const url = record.contentUri;
-
     const response = await platform.get(url);
     const fileBuffer = await response.buffer();
     const urlArray =  url.split('/');
-    const fileName = urlArray[urlArray.length - 2] || `${record.id}.mp3`
+    const fileName = urlArray[urlArray.length - 2] || `${record.id}.mp3`;
     const size = fileBuffer.length;
 
-
-    console.log(fileBuffer.length);
-    console.log(fileName);
-
-    // Get the Slack upload URL
     try{
       const slackRes = await axios.get(`https://slack.com/api/files.getUploadURLExternal?filename=${fileName}&length=${size}`, {
         headers: {
@@ -33,14 +27,12 @@ const getUploadURL = async (record, platform) => {
       console.log(JSON.stringify(slackData,null,2));
 
         if (slackRes.status === 200) {
-          // Prepare the form data for upload
           const form = new FormData();
           form.append('file', fileBuffer, {
             filename: fileName,
             contentType: 'audio/mpeg'
           });
     
-          // Upload the file to Slack
           const uploadRes = await axios.post(slackData.upload_url, form, {
             headers: {
               'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
@@ -50,8 +42,7 @@ const getUploadURL = async (record, platform) => {
     
           if (uploadRes.status === 200) {
             console.log(uploadRes.data);
-            // await completeUploadToSlack(slackData.file_id, companyName, dot, user_name, phone, companyId, duration);
-            await completeUploadToSlack(slackData.file_id);
+            await completeUploadToSlack(slackData.file_id, callLogs, hb);
             console.log('Success ');
     
           } else {
@@ -73,37 +64,51 @@ const getUploadURL = async (record, platform) => {
   }
 } 
 
-
-async function completeUploadToSlack(fileId) {
-// async function completeUploadToSlack(fileId, companyName, dot, aircall_user_name, phone,companyId, duration) {
+const completeUploadToSlack = async (fileId, logs, hb) => {
+  
+  
+  let member = logs.from.name;
+  let phone = logs.to.phoneNumber;
+  let duration = logs.duration;
+  let name = hb.contact.properties.firstname;
+  let lead_status = hb.contact.properties.hs_lead_status;
+  let assoc_company = hb.company.properties.name;
+  let contactID = hb.contact.id;
+  let project = hb.contact.properties.project;
+ 
   const payload = {
     files: [
       {
         id: fileId,
-        title: `test recording`,
-        // title: `${aircall_user_name} - ${companyName} - ${dot}`,
+        title: `${assoc_company}_${name}.mp3`,
       }
     ],
     channel_id: process.env.SLACK_CHANNEL_ID,
-    initial_comment: 'Test Recording'
-    // `Team Member: ${aircall_user_name}\nCompany: ${companyName}.\nPhone: ${phone}\nDOT: ${dot}\nHubspot Link: ${'https://app.hubspot.com/contacts/6919233/record/0-2/'+ (companyId || 'N/A')}\nCall Length: ${convertSecsToMins(duration)}\n`
+    initial_comment:
+    `Team Member: ${member}\nContact: ${name}\nCompany: ${assoc_company}.\nLead Status: ${lead_status}\nProject: ${project}\nHubspot Link: ${'https://app.hubspot.com/contacts/46487044/record/0-1/'+ (contactID || 'N/A')}\nPhone: ${phone}\nCall Length: ${convertSecsToMins(duration)}\n`
   };
 
-  try {
-    const response = await axios.post('https://slack.com/api/files.completeUploadExternal', payload, {
-      headers: {
-        'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
-        'Content-Type': 'application/json'
-      }
-    });
+  // try {
+  //   const response = await axios.post('https://slack.com/api/files.completeUploadExternal', payload, {
+  //     headers: {
+  //       'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
+  //       'Content-Type': 'application/json'
+  //     }
+  //   });
 
-    console.log(JSON.stringify(response.data, null, 5));
-  } catch (error) {
-    console.error('Complete Upload Failed!');
-    console.error(error.message);
-  }
+  //   console.log(JSON.stringify(response.data, null, 5));
+  // } catch (error) {
+  //   console.error('Complete Upload Failed!');
+  //   console.error(error.message);
+  // }
+}
+
+const convertSecsToMins = (seconds) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes} min ${remainingSeconds} sec`;
 }
 
 module.exports = {
-  getUploadURL
+  uploadFileToSlack
 }
