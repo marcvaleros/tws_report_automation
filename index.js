@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 app.get('/', (req, res) => {
-  res.send('Report Automation for TWS with Hubspot and RingCentral! Your server is running.');
+  res.send('Automation for TWS with Hubspot and RingCentral! Your server is running.');
 });
 
 // Middleware to parse JSON request body
