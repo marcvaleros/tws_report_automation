@@ -3,7 +3,6 @@ const axios = require('axios');
 const FormData = require('form-data');
 
 
-// const uploadFileToSlack = async (url, companyName, dot, user_name, phone,companyId, duration) => {
 const uploadFileToSlack = async (callLogs, platform, hb) => {
   try {
 
