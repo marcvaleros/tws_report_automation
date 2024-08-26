@@ -8,7 +8,7 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
   try {
 
     const record = callLogs.recording;
-    // console.log(JSON.stringify(record,null,2));
+    console.log(JSON.stringify(record,null,2));
     
     const url = record.contentUri;
     const response = await platform.get(url);
@@ -65,16 +65,20 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
 } 
 
 const completeUploadToSlack = async (fileId, logs, hb) => {
-  
-  
-  let member = logs.from.name;
-  let phone = logs.to.phoneNumber;
-  let duration = logs.duration;
-  let name = hb.contact.properties.firstname;
-  let lead_status = hb.contact.properties.hs_lead_status;
-  let assoc_company = hb.company.properties.name;
-  let contactID = hb.contact.id;
-  let project = hb.contact.properties.project;
+  if(hb === null){
+    console.log("Unknown number. No Hubspot Account");
+    return;
+  }
+
+  const member = logs.from.name;
+  const phone = logs.to.phoneNumber;
+  const duration = logs.duration;
+
+  const name = hb.contact.properties.firstname;
+  const lead_status = hb.contact.properties.hs_lead_status;
+  const assoc_company = hb.company.properties.name;
+  const contactID = hb.contact.id;
+  const project = hb.contact.properties.project;
  
   const payload = {
     files: [
@@ -88,19 +92,19 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
     `Team Member: ${member}\nContact: ${name}\nCompany: ${assoc_company}.\nLead Status: ${lead_status}\nProject: ${project}\nHubspot Link: ${'https://app.hubspot.com/contacts/46487044/record/0-1/'+ (contactID || 'N/A')}\nPhone: ${phone}\nCall Length: ${convertSecsToMins(duration)}\n`
   };
 
-  // try {
-  //   const response = await axios.post('https://slack.com/api/files.completeUploadExternal', payload, {
-  //     headers: {
-  //       'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
-  //       'Content-Type': 'application/json'
-  //     }
-  //   });
+  try {
+    const response = await axios.post('https://slack.com/api/files.completeUploadExternal', payload, {
+      headers: {
+        'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-  //   console.log(JSON.stringify(response.data, null, 5));
-  // } catch (error) {
-  //   console.error('Complete Upload Failed!');
-  //   console.error(error.message);
-  // }
+    console.log(JSON.stringify(response.data, null, 5));
+  } catch (error) {
+    console.error('Complete Upload Failed!');
+    console.error(error.message);
+  }
 }
 
 const convertSecsToMins = (seconds) => {

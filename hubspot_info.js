@@ -6,25 +6,25 @@ const TWS_HUBSPOT_BASE_URL = "https://api.hubapi.com";
 
 /** Get relevant information from contact -> company */
 const getHubspotInfo = async (phoneNumber) => {
-
-  let companyID;
-  let company;
-  let contact;
   try {
-    contact = await getContactInfo(phoneNumber);
-    console.log(contact);
-    
+    let companyID;
+    let company;
+    let contact = await getContactInfo(phoneNumber); 
+
+    if(contact !== 0){
+      companyID = await getAssociatedCompany(contact.id);
+      company = await getCompanyInfo(companyID);
+      return {contact, company};
+    }else{
+      console.error("Contact Information is null");
+      return null;
+    }
+
   } catch (error) {
     console.error("Failed to fetch contact information");
-    return;
+    return null;
   }
 
-  if(contact.id){
-    companyID = await getAssociatedCompany(contact.id);
-    company = await getCompanyInfo(companyID);
-  }
-
-  return {contact, company};
 }
 
 /** Get Detailed Company Information  */
@@ -40,7 +40,6 @@ const getCompanyInfo = async (companyID) => {
         }
       });
 
-      
       console.log(`Successfully Fetched Company Information`);
       console.log(response.data.properties.name);
       
@@ -119,9 +118,14 @@ const getContactInfo = async (phoneNumber) => {
         'Content-Type': 'application/json'
       }
     });
-    // console.log(JSON.stringify(response.data.results[0], null, 2));
-    console.log("Successfully fetched contact info from phonenumber");
-    return response.data.results[0];
+
+    if(response.data.results.length > 0){
+      console.log("Successfully fetched contact info from phonenumber");
+      return response.data.results[0];
+    }else{
+      console.log("Failed to get the hubspot contact via phonenumber");
+      return null;
+    }
   } catch (error) {
     console.error("Failed to get the hubspot contact via phonenumber",error);
     return null;

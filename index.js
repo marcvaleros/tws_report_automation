@@ -27,7 +27,7 @@ var platform = rcsdk.platform();
 platform.login({'jwt': process.env.RC_JWT});
 
 platform.on(platform.events.loginSuccess, function(e){
-  // get_call_logs();
+  // deleteAllSubscriptions();
   checkAndCreateSubscription();
 });
 
@@ -39,14 +39,20 @@ platform.on(platform.events.loginError, function(e){
 //create webhook subscription
 
 app.post('/webhook', (req,res) => {
-  const event = req.body;
-  console.log(event);
-  
-  if(event && event.event && event.event.includes('telephony/sessions')){
-    console.log("Call ended event received:", event);
+  const validation_token = req.headers['validation-token'];
+
+  if (validation_token) {                                                   // validation token is only added to headers during webhook setup process
+    res.setHeader('Validation-Token', validation_token);
+    res.status(200).send("Validation Token Attached to Headers");                
+  } else {                                                                 // acquire the call logs of a specific number
+    const reqBody = req.body;
+    if(reqBody && reqBody.event.includes('telephony/sessions') && reqBody.body.parties[0].status.code === "Disconnected"){  //
+        console.log(JSON.stringify(reqBody.body,null,2));
+        get_call_logs(reqBody.body)
+    }
+
+    res.status(200).send('OK');
   }
-  
-  res.status(200).send('OK');
 });
 
 
@@ -54,59 +60,92 @@ const checkAndCreateSubscription = async () => {
   try {
     const response = await platform.get('/restapi/v1.0/subscription');
     const subscriptions = await response.json();
-    console.log(subscriptions);
+    console.log(JSON.stringify(subscriptions,null,2));
     
-    let existingSubscription = subscriptions.records.find(subscription => subscription.deliveryMode.transportType === 'Webhook' && 
+    let existingSubscription = subscriptions.records.find(subscription => subscription.deliveryMode.transportType === 'WebHook' && 
       subscription.deliveryMode.address === `${process.env.REQUEST_URL}/webhook`
     );
-    
+        
     if(existingSubscription !== undefined){
       console.log('Existing Subscription Found: ', existingSubscription.id);
     } else {
       const newSubscription = await platform.post('/restapi/v1.0/subscription', {
         eventFilters: [
-          '/restapi/v1.0/account/~/extension/~/telephony/sessions'
+          '/restapi/v1.0/account/~/extension/~/telephony/sessions?statusCode=Disconnected&withRecordings=true'
         ],
         deliveryMode: {
           transportType: 'WebHook',
           address: `${process.env.REQUEST_URL}/webhook`
         },
-         expiresIn: 604800 // 1 week
+         expiresIn: 630720000 // 20 years
       });
 
       const subscriptionData = await newSubscription.json();
+
       console.log('New Subscription Created', subscriptionData.id);
-      // where to store subscriptionID (?)
-      
+      console.log('Subscription Data', subscriptionData);
     }
 
-    
   } catch (error) {
     console.error(`Failed creating a subscription: ${error}`);
     
   }
 }
 
-const get_call_logs = async () => {
+const deleteAllSubscriptions = async () => {
   try {
-    const queryParams = {
-      recordingType: 'Automatic',
-      direction: 'Outbound'
-    };
+    const response = await platform.get('/restapi/v1.0/subscription');
+    const subscriptions = await response.json();
 
-    const response = await platform.get("/restapi/v1.0/account/~/extension/~/call-log/APwugfaesUjvao1A", queryParams); 
-    const callLogs = await response.json();
-
-    // console.log(JSON.stringify(callLogs,null,2));
-    const hubspotInfo = await getHubspotInfo(callLogs.to.phoneNumber)
-    console.log(hubspotInfo);
-    
-    uploadFileToSlack(callLogs, platform, hubspotInfo);  // gets the data from the url and upload them to slack 
-    
+    for(let subscription of subscriptions.records){
+      const subscriptionId = subscription.id;
+      await platform.delete(`/restapi/v1.0/subscription/${subscriptionId}`);
+      console.log(`Deleted Subscription with ID: ${subscriptionId}`);
+    }
+    console.log("All Subscriptions have been deleted.");    
   } catch (error) {
-    console.log('Error retrieving company call logs:', error);
+    console.log(`Failed to delete subscriptions: ${error}`);
+    
   }
 }
+
+
+const get_call_logs = async (body) => {
+  try {
+    const maxAttempts = 20;
+    const delayMs = 5000;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log(`Polling Attempt ${attempt}`);
+
+      const queryParams = { sessionId: body.sessionId };
+      const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
+      const recordArr = await response.json();
+
+      if (recordArr?.records?.length > 0) {
+        const record = recordArr.records[0];
+
+        if (record.duration >= process.env.DURATION) {
+          console.log(`contentURI: ${record.recording.contentUri}`);
+
+          const hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
+          console.log(hubspotInfo);
+
+          await uploadFileToSlack(record, platform, hubspotInfo);
+          return;
+        } else {
+          console.log('Recording metadata is not available.');
+        }
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+
+    console.log('Recording metadata is not available after maximum attempts.');
+  } catch (error) {
+    console.error('Error retrieving company call logs:', error);
+  }
+};
 
 
 app.listen(port, () =>{
