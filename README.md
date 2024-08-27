@@ -9,5 +9,4 @@ Key features of this script include:
 - **RingCentral SDK**: Utilized for efficient handling of authorization (via JWT and OAuth), error management, and webhook subscriptions.
 - **Polling Technique**: Ensures audio recordings are available after calls and manages other asynchronous processes effectively.
 
-This script is designed to streamline and automate the workflow, making it an essential tool for teams using TWS.
-`
+This script is designed to streamline and automate the workflow, making it an essential tool for teams.
