@@ -1,4 +1,13 @@
-An automation script developed using NodeJS Javascript for TWS. The APIs used in this project were Hubspot API and RingCentral API. 
-Functionality involves sending recordings from ringcentral and upload the audio files to slack from the metadata returned from RC's API. 
-Ringcentral SDK was used to streamline the entire process from authorization using JWT and OAuth, error handling and webhook subscription.
-Polling technique was used to wait for audio recordings to be readily avaialable after a call ends and for other asynchronous proceses.     
+### TWS Automation Script
+
+This project is a Node.js automation script developed for TWS, integrating with the HubSpot and RingCentral APIs. The primary functionality involves retrieving call recordings from RingCentral and uploading them to Slack based on metadata provided by the RingCentral API.
+
+Key features of this script include:
+
+- **APIs Integration**: Seamless interaction with HubSpot and RingCentral APIs.
+- **Audio File Management**: Automatically sends and uploads call recordings from RingCentral to Slack.
+- **RingCentral SDK**: Utilized for efficient handling of authorization (via JWT and OAuth), error management, and webhook subscriptions.
+- **Polling Technique**: Ensures audio recordings are available after calls and manages other asynchronous processes effectively.
+
+This script is designed to streamline and automate the workflow, making it an essential tool for teams using TWS.
+`
