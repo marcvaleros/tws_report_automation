@@ -11,6 +11,8 @@ const getHubspotInfo = async (phoneNumber) => {
     let company;
     let contact = await getContactInfo(phoneNumber); 
 
+    console.log(`Contact is ${contact}`);
+    
     if(contact !== 0){
       companyID = await getAssociatedCompany(contact.id);
       company = await getCompanyInfo(companyID);

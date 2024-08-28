@@ -32,7 +32,15 @@ platform.on(platform.events.loginSuccess, function(e){
 });
 
 platform.on(platform.events.loginError, function(e){
-  console.log("Unable to authenticate to platform. Check credentials.", e.message)
+  console.log("Unable to authenticate to platform. Attempting to Authenticate.", e.message);
+
+  // Attempt to reauthenticate
+  platform.login({'jwt': process.env.RC_JWT}).then(() => {
+    console.log("Reauthenticated successfully");
+  }).catch((error) => {
+    console.log("Reauthentication failed", error.message);
+    process.exit(1); // exit if reauthentication fails
+  });
   process.exit(1)
 });
 
