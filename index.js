@@ -3,7 +3,6 @@ const express = require('express');
 const { uploadFileToSlack } = require('./slack');
 const { getHubspotInfo } = require('./hubspot_info');
 
-
 //create a server 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -24,27 +23,30 @@ var rcsdk = new RC_SDK({
 });
 
 var platform = rcsdk.platform();
-platform.login({'jwt': process.env.RC_JWT});
 
-platform.on(platform.events.loginSuccess, function(e){
-  // deleteAllSubscriptions();
-  checkAndCreateSubscription();
-});
+const loginJWT = async () => {
+  try {
+    platform.login({'jwt': process.env.RC_JWT}).then(async function (res) {
+      return await res.json();
+    }).then((r) => console.log("Login Response", r));
+
+    platform.on(platform.events.loginSuccess, function(e){
+      // deleteAllSubscriptions();
+      checkAndCreateSubscription();
+    });
+
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+}
 
 platform.on(platform.events.loginError, function(e){
   console.log("Unable to authenticate to platform. Attempting to Authenticate.", e.message);
-
-  // Attempt to reauthenticate
-  platform.login({'jwt': process.env.RC_JWT}).then(() => {
-    console.log("Reauthenticated successfully");
-  }).catch((error) => {
-    console.log("Reauthentication failed", error.message);
-    process.exit(1); // exit if reauthentication fails
-  });
   process.exit(1)
 });
 
-//create webhook subscription
 
 app.post('/webhook', (req,res) => {
   const validation_token = req.headers['validation-token'];
@@ -54,7 +56,7 @@ app.post('/webhook', (req,res) => {
     res.status(200).send("Validation Token Attached to Headers");                
   } else {                                                                 // acquire the call logs of a specific number
     const reqBody = req.body;
-    if(reqBody && reqBody.event.includes('telephony/sessions') && reqBody.body.parties[0].status.code === "Disconnected"){  //
+    if(reqBody && reqBody.event.includes('telephony/sessions') && reqBody.body.parties[0].status.code === "Disconnected"){
         console.log(JSON.stringify(reqBody.body,null,2));
         get_call_logs(reqBody.body)
     }
@@ -85,7 +87,7 @@ const checkAndCreateSubscription = async () => {
           transportType: 'WebHook',
           address: `${process.env.REQUEST_URL}/webhook`
         },
-         expiresIn: 630720000 // 20 years
+         expiresIn: 630720000
       });
 
       const subscriptionData = await newSubscription.json();
@@ -119,42 +121,45 @@ const deleteAllSubscriptions = async () => {
 
 
 const get_call_logs = async (body) => {
-  try {
-    const maxAttempts = 20;
-    const delayMs = 5000;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      console.log(`Polling Attempt ${attempt}`);
-
-      const queryParams = { sessionId: body.sessionId };
-      const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
-      const recordArr = await response.json();
-
-      if (recordArr?.records?.length > 0) {
-        const record = recordArr.records[0];
-
-        if (record.duration >= process.env.DURATION) {
-          console.log(`contentURI: ${record.recording.contentUri}`);
-
-          const hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
-          console.log(hubspotInfo);
-
-          await uploadFileToSlack(record, platform, hubspotInfo);
-          return;
-        } else {
-          console.log('Recording metadata is not available.');
+    try {
+      const maxAttempts = 20;
+      const delayMs = 5000;
+  
+      
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        console.log(`Polling Attempt ${attempt}`);
+        
+        const queryParams = { sessionId: body.sessionId };
+        const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
+        const recordArr = await response.json();
+  
+        if (recordArr?.records?.length > 0) {
+          const record = recordArr.records[0];
+  
+          if (record.duration >= process.env.DURATION) {
+            console.log(`contentURI: ${record.recording.contentUri}`);
+  
+            const hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
+            console.log(hubspotInfo);
+  
+            await uploadFileToSlack(record, platform, hubspotInfo);
+            return;
+          } else {
+            console.log('Recording metadata is not available.');
+          }
         }
+  
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
-
-      await new Promise(resolve => setTimeout(resolve, delayMs));
+  
+      console.log('Recording metadata is not available after maximum attempts.');
+    } catch (error) {
+      console.error('Error retrieving call logs from RingCentral:', error);
     }
-
-    console.log('Recording metadata is not available after maximum attempts.');
-  } catch (error) {
-    console.error('Error retrieving company call logs:', error);
-  }
 };
 
+
+loginJWT();
 
 app.listen(port, () =>{
   console.log(`Server is running on port ${port}`);
