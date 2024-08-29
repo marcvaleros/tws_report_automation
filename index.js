@@ -146,13 +146,14 @@ const get_call_logs = async (body) => {
             return;
           } else {
             console.log('Recording metadata is not available.');
+            break;
           }
         }
   
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
   
-      console.log('Recording metadata is not available after maximum attempts.');
+      console.log('Recording metadata is not available after maximum attempts or below required duration.');
     } catch (error) {
       console.error('Error retrieving call logs from RingCentral:', error);
     }
