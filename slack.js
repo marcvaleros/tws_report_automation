@@ -64,20 +64,20 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
 } 
 
 const completeUploadToSlack = async (fileId, logs, hb) => {
-  if(hb === null){
-    console.log("Unknown number. No Hubspot Account");
-    return;
-  }
+  // if(hb === null){
+  //   console.log("Unknown number. No Hubspot Account");
+  //   return;
+  // }
 
   const member = logs.from.name;
   const phone = logs.to.phoneNumber;
   const duration = logs.duration;
 
-  const name = hb.contact.properties.firstname;
-  const lead_status = hb.contact.properties.hs_lead_status;
-  const assoc_company = hb.company.properties.name;
-  const contactID = hb.contact.id;
-  const project = hb.contact.properties.project;
+  const name = hb?.contact?.properties?.firstname;
+  const lead_status = hb?.contact?.properties?.hs_lead_status;
+  const assoc_company = hb?.company?.properties?.name;
+  const contactID = hb?.contact?.id;
+  const project = hb?.contact?.properties?.project;
  
   const payload = {
     files: [
