@@ -138,10 +138,16 @@ const get_call_logs = async (body) => {
   
           if (record.duration >= process.env.DURATION) {
             console.log(`contentURI: ${record.recording.contentUri}`);
-  
-            const hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
+            let hubspotInfo;
+
+            //check whether it's inbound or outbound
+            if(record.direction === "Inbound"){
+              hubspotInfo = await getHubspotInfo(record.from.phoneNumber);  // if inbound, use the from attribute 
+            }else{
+              hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
+            }
+
             console.log(hubspotInfo);
-  
             await uploadFileToSlack(record, platform, hubspotInfo);
             return;
           } else {

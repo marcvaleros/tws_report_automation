@@ -68,9 +68,17 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
   //   console.log("Unknown number. No Hubspot Account");
   //   return;
   // }
+  let member;
+  let phone;
+  
+  if(logs.direction === "Inbound"){
+    member = logs.to.name;
+    phone = logs.from.phoneNumber;
+  }else{
+    member = logs.from.name;
+    phone = logs.to.phoneNumber;
+  }
 
-  const member = logs.from.name;
-  const phone = logs.to.phoneNumber;
   const duration = logs.duration;
 
   const name = hb?.contact?.properties?.firstname;
