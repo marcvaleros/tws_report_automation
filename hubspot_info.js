@@ -85,16 +85,40 @@ const getAssociatedCompany = async (contactID) => {
 */
 const getContactInfo = async (phoneNumber) => {
   let endpoint = "/crm/v3/objects/contacts/search";
-  const formattedPhone = formatPhoneNumber(phoneNumber);
-
+  const formattedPhone = formatPhone(phoneNumber);
+  //first format the phone number, remove any symbols
+  const formattedPhoneWithDashes = formatPhoneWithDashes(formattedPhone);
+  const formattedPhoneWithParenthesis = formatPhoneWithParenthesis(formattedPhone);
 
   const requestBody = {
-    "filters": [
+    "filtergroups": [
       {
-        "propertyName": "phone",
-        "operator": "CONTAINS_TOKEN",
-        "value": `*${formattedPhone}`
-      }
+        "filters": [
+          {
+            "propertyName": "phone",
+            "operator": "CONTAINS_TOKEN",
+            "value": `*${formattedPhone}`
+          }
+        ]
+      },
+      {
+        "filters": [
+          {
+            "propertyName": "phone",
+            "operator": "CONTAINS_TOKEN",
+            "value": `*${formattedPhoneWithDashes}`
+          }
+        ]
+      },
+      {
+        "filters": [
+          {
+            "propertyName": "phone",
+            "operator": "CONTAINS_TOKEN",
+            "value": `*${formattedPhoneWithParenthesis}`
+          }
+        ]
+      },
     ],
     "sorts": [{
         "propertyName": "createdate",
@@ -135,9 +159,19 @@ const getContactInfo = async (phoneNumber) => {
 }
 
 /**Format phone number from E.164 to trimmed number */
-const formatPhoneNumber = (phoneNumber) => {
-  return phoneNumber.replace('+1', '');
+const formatPhone = (phoneNumber) => {
+  const countryCodeRemove = phoneNumber.replace('+1', '');
+  return countryCodeRemove.replace(/[-() ]/g, '');
 }
+
+function formatPhoneWithDashes(phoneNumber) {
+  return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'); //create capture groups and use that to create the format
+}
+
+function formatPhoneWithParenthesis(phoneNumber) {
+  return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3'); //create capture groups and use that to create the format
+}
+
 
 
 module.exports = {
