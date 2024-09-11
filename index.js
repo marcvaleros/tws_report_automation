@@ -153,7 +153,6 @@ const get_call_logs = async (body) => {
             return;
           } else {
             console.log('Recording metadata is not available.');
-            break;
           }
         }
   
