@@ -7,7 +7,7 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
   try {
 
     const record = callLogs.recording;
-    console.log(JSON.stringify(record,null,2));
+    console.log(JSON.stringify(record,null,2));   
     
     const url = record.contentUri;
     const response = await platform.get(url);

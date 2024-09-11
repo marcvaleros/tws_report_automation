@@ -142,12 +142,13 @@ const get_call_logs = async (body) => {
 
             //check whether it's inbound or outbound
             if(record.direction === "Inbound"){
+              console.log(`INBOUND: This is the hubspot info returned from this number ${record.from.phoneNumber}`);
               hubspotInfo = await getHubspotInfo(record.from.phoneNumber);  // if inbound, use the from attribute 
             }else{
+              console.log(`OUTBOUND: This is the hubspot info returned from this number ${record.to.phoneNumber}`);
               hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
             }
 
-            console.log(hubspotInfo);
             await uploadFileToSlack(record, platform, hubspotInfo);
             return;
           } else {

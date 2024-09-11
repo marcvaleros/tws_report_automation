@@ -11,7 +11,7 @@ const getHubspotInfo = async (phoneNumber) => {
     let company;
     let contact = await getContactInfo(phoneNumber); 
 
-    console.log(`Contact is ${contact}`);
+    console.log(`Contact is ${JSON.stringify(contact,null,1)}`);
     
     if(contact !== 0){
       companyID = await getAssociatedCompany(contact.id);
@@ -86,39 +86,14 @@ const getAssociatedCompany = async (contactID) => {
 const getContactInfo = async (phoneNumber) => {
   let endpoint = "/crm/v3/objects/contacts/search";
   const formattedPhone = formatPhone(phoneNumber);
-  //first format the phone number, remove any symbols
-  const formattedPhoneWithDashes = formatPhoneWithDashes(formattedPhone);
-  const formattedPhoneWithParenthesis = formatPhoneWithParenthesis(formattedPhone);
 
   const requestBody = {
-    "filtergroups": [
+    "filters": [
       {
-        "filters": [
-          {
-            "propertyName": "phone",
-            "operator": "CONTAINS_TOKEN",
-            "value": `*${formattedPhone}`
-          }
-        ]
-      },
-      {
-        "filters": [
-          {
-            "propertyName": "phone",
-            "operator": "CONTAINS_TOKEN",
-            "value": `*${formattedPhoneWithDashes}`
-          }
-        ]
-      },
-      {
-        "filters": [
-          {
-            "propertyName": "phone",
-            "operator": "CONTAINS_TOKEN",
-            "value": `*${formattedPhoneWithParenthesis}`
-          }
-        ]
-      },
+        "propertyName": "phone",
+        "operator": "CONTAINS_TOKEN",
+        "value": `${formattedPhone}`
+      }
     ],
     "sorts": [{
         "propertyName": "createdate",
@@ -162,14 +137,6 @@ const getContactInfo = async (phoneNumber) => {
 const formatPhone = (phoneNumber) => {
   const countryCodeRemove = phoneNumber.replace('+1', '');
   return countryCodeRemove.replace(/[-() ]/g, '');
-}
-
-function formatPhoneWithDashes(phoneNumber) {
-  return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3'); //create capture groups and use that to create the format
-}
-
-function formatPhoneWithParenthesis(phoneNumber) {
-  return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3'); //create capture groups and use that to create the format
 }
 
 
