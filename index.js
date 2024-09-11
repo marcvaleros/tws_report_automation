@@ -122,7 +122,7 @@ const deleteAllSubscriptions = async () => {
 
 const get_call_logs = async (body) => {
     try {
-      const maxAttempts = 20;
+      const maxAttempts = 30;
       const delayMs = 5000;
   
       
@@ -133,6 +133,8 @@ const get_call_logs = async (body) => {
         const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
         const recordArr = await response.json();
   
+        console.log(JSON.stringify(`This is the response json ${recordArr}`));
+        
         if (recordArr?.records?.length > 0) {
           const record = recordArr.records[0];
   
