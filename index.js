@@ -2,10 +2,12 @@ require('dotenv').config();
 const express = require('express');
 const { uploadFileToSlack } = require('./slack');
 const { getHubspotInfo } = require('./hubspot_info');
+const cors = require('cors');
 
 //create a server 
 const app = express();
 const port = process.env.PORT || 8080;
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.send('Automation for TWS with Hubspot and RingCentral! Your server is running.');
@@ -28,8 +30,6 @@ const loginToAllAccounts = async () => {
     });
 
     const platform = rcsdk.platform();
-
-
     platforms.push({platform, accountID: account.clientId })
 
     try {
@@ -59,7 +59,7 @@ app.post('/webhook', async (req,res) => {
     const reqBody = req.body;
     if(reqBody && reqBody.event.includes('telephony/sessions') && reqBody.body.parties[0].status.code === "Disconnected"){
         console.log(JSON.stringify(reqBody.body,null,2));
-        await processCallLogs(reqBody.body)
+        await processCallLogs(reqBody.body);
     }
 
     res.status(200).send('OK');
