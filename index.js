@@ -5,12 +5,13 @@ const express = require('express');
 const { uploadFileToSlack } = require('./slack');
 const { getHubspotInfo } = require('./hubspot_info');
 const cors = require('cors');
+const db = require('./database');
 
 //create a server 
 const app = express();
-const router = express.Router();
-const configPath = path.join(__dirname, 'config.json');
-const config = JSON.parse(fs.readFileSync(configPath));
+// const router = express.Router();
+// const configPath = path.join(__dirname, 'config.json');
+// const config = JSON.parse(fs.readFileSync(configPath));
 
 const port = process.env.PORT || 8080;
 app.use(cors());
@@ -23,8 +24,7 @@ app.get('/', (req, res) => {
 app.use(express.json());
 
 const RC_SDK = require('@ringcentral/sdk').SDK;
-
-const accounts = JSON.parse(process.env.RC_ACCOUNTS);
+const accounts = JSON.parse(process.env.RC_ACCOUNTS);  //get all the accounts from env (replace with  a db query to get tws creds)
 const platforms = [];
 
 const loginToAllAccounts = async () => {
@@ -72,6 +72,18 @@ app.post('/webhook', async (req,res) => {
   }
 });
 
+app.post('/api/store-credentials', async (req, res) => {
+  const {server, clientId, clientSecret, jwt} = req.body;
+
+  const query = `INSERT INTO ringcentral_credentials (server, clientId, clientSecret, jwt) VALUES (?,?,?,?)`;
+
+  db.query(query, [server, clientId, clientSecret,jwt], (err) => {
+    if(err){
+      return res.status(500).send('Error Storing Credentials');
+    }
+    res.status(200).send('Credentials Stored Successfully');
+  })
+});
 
 const checkAndCreateSubscription = async (platform, accountId) => {
   try {
@@ -164,53 +176,52 @@ const processCallLogs = async (body) =>{
   }
 }
 
-const get_call_logs = async (body) => {
-    try {
-      const maxAttempts = 30;
-      const delayMs = 5000;
+// const get_call_logs = async (body) => {
+//     try {
+//       const maxAttempts = 30;
+//       const delayMs = 5000;
   
       
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        console.log(`Polling Attempt ${attempt}`);
+//       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+//         console.log(`Polling Attempt ${attempt}`);
         
-        const queryParams = { sessionId: body.sessionId };
-        const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
-        const recordArr = await response.json();
+//         const queryParams = { sessionId: body.sessionId };
+//         const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
+//         const recordArr = await response.json();
   
-        console.log(JSON.stringify(`This is the response json ${JSON.stringify(recordArr,null,1)}`));
+//         console.log(JSON.stringify(`This is the response json ${JSON.stringify(recordArr,null,1)}`));
         
-        if (recordArr?.records?.length > 0) {
-          const record = recordArr.records[0];
+//         if (recordArr?.records?.length > 0) {
+//           const record = recordArr.records[0];
   
-          if (record.duration >= process.env.DURATION) {
-            console.log(`contentURI: ${record.recording.contentUri}`);
-            let hubspotInfo;
+//           if (record.duration >= process.env.DURATION) {
+//             console.log(`contentURI: ${record.recording.contentUri}`);
+//             let hubspotInfo;
 
-            //check whether it's inbound or outbound
-            if(record.direction === "Inbound"){
-              console.log(`INBOUND: This is the hubspot info returned from this number ${record.from?.phoneNumber}`);
-              hubspotInfo = await getHubspotInfo(record.from.phoneNumber);  // if inbound, use the from attribute 
-            }else{
-              console.log(`OUTBOUND: This is the hubspot info returned from this number ${record.to?.phoneNumber}`);
-              hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
-            }
+//             //check whether it's inbound or outbound
+//             if(record.direction === "Inbound"){
+//               console.log(`INBOUND: This is the hubspot info returned from this number ${record.from?.phoneNumber}`);
+//               hubspotInfo = await getHubspotInfo(record.from.phoneNumber);  // if inbound, use the from attribute 
+//             }else{
+//               console.log(`OUTBOUND: This is the hubspot info returned from this number ${record.to?.phoneNumber}`);
+//               hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
+//             }
 
-            await uploadFileToSlack(record, platform, hubspotInfo);
-            return;
-          } else {
-            console.log('Recording metadata is not available.');
-          }
-        }
+//             await uploadFileToSlack(record, platform, hubspotInfo);
+//             return;
+//           } else {
+//             console.log('Recording metadata is not available.');
+//           }
+//         }
   
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
+//         await new Promise(resolve => setTimeout(resolve, delayMs));
+//       }
   
-      console.log('Recording metadata is not available after maximum attempts or below required duration.');
-    } catch (error) {
-      console.error('Error retrieving call logs from RingCentral:', error);
-    }
-};
-
+//       console.log('Recording metadata is not available after maximum attempts or below required duration.');
+//     } catch (error) {
+//       console.error('Error retrieving call logs from RingCentral:', error);
+//     }
+// };
 
 loginToAllAccounts();
 
