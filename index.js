@@ -14,51 +14,52 @@ app.get('/', (req, res) => {
 // Middleware to parse JSON request body
 app.use(express.json());
 
-
 const RC_SDK = require('@ringcentral/sdk').SDK;
-var rcsdk = new RC_SDK({
-  'server': process.env.RC_SERVER_URL,
-  'clientId': process.env.RC_CLIENT_ID,
-  'clientSecret': process.env.RC_CLIENT_SECRET
-});
 
-var platform = rcsdk.platform();
+const accounts = JSON.parse(process.env.RC_ACCOUNTS);
+const platforms = [];
 
-const loginJWT = async () => {
-  try {
-    platform.login({'jwt': process.env.RC_JWT}).then(async function (res) {
-      return await res.json();
-    }).then((r) => console.log("Login Response", r));
-
-    platform.on(platform.events.loginSuccess, function(e){
-      // deleteAllSubscriptions();
-      checkAndCreateSubscription();
+const loginToAllAccounts = async () => {
+  for(const account of accounts) {
+    const rcsdk = new RC_SDK({
+      server: account.server,
+      clientId: account.clientId,
+      clientSecret: account.clientSecret
     });
 
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
+    const platform = rcsdk.platform();
+
+
+    platforms.push({platform, accountID: account.clientId })
+
+    try {
+      await platform.login({jwt: account.jwt});
+      console.log(`Logged into RingCentral account: ${account.clientId}`);
+      await checkAndCreateSubscription(platform, account.clientId);
+      //await deleteAllSubscriptions(platform, account.clientId);
+
+      platform.on(platform.events.loginError, function(e){
+        console.error(`Unable to authenticate to RingCentral for account: ${account.clientId}`, e.message);
+      })
+      
+    } catch (error) {
+      console.error(`Failed to log in to RingCentral account: ${account.clientId}`, error);
+    }
+
   }
 }
 
-platform.on(platform.events.loginError, function(e){
-  console.log("Unable to authenticate to platform. Attempting to Authenticate.", e.message);
-  process.exit(1)
-});
-
-
-app.post('/webhook', (req,res) => {
+app.post('/webhook', async (req,res) => {
   const validation_token = req.headers['validation-token'];
 
-  if (validation_token) {                                                   // validation token is only added to headers during webhook setup process
+  if (validation_token){                                                   // validation token is only added to headers during webhook setup process
     res.setHeader('Validation-Token', validation_token);
     res.status(200).send("Validation Token Attached to Headers");                
   } else {                                                                 // acquire the call logs of a specific number
     const reqBody = req.body;
     if(reqBody && reqBody.event.includes('telephony/sessions') && reqBody.body.parties[0].status.code === "Disconnected"){
         console.log(JSON.stringify(reqBody.body,null,2));
-        get_call_logs(reqBody.body)
+        await processCallLogs(reqBody.body)
     }
 
     res.status(200).send('OK');
@@ -66,7 +67,7 @@ app.post('/webhook', (req,res) => {
 });
 
 
-const checkAndCreateSubscription = async () => {
+const checkAndCreateSubscription = async (platform, accountId) => {
   try {
     const response = await platform.get('/restapi/v1.0/subscription');
     const subscriptions = await response.json();
@@ -76,8 +77,8 @@ const checkAndCreateSubscription = async () => {
       subscription.deliveryMode.address === `${process.env.REQUEST_URL}/webhook`
     );
         
-    if(existingSubscription !== undefined){
-      console.log('Existing Subscription Found: ', existingSubscription.id);
+    if(existingSubscription){
+      console.log(`Existing Subscription Found for account ${accountId}: `, existingSubscription.id);
     } else {
       const newSubscription = await platform.post('/restapi/v1.0/subscription', {
         eventFilters: [
@@ -92,17 +93,16 @@ const checkAndCreateSubscription = async () => {
 
       const subscriptionData = await newSubscription.json();
 
-      console.log('New Subscription Created', subscriptionData.id);
+      console.log( `New Subscription Created for account ${accountId}`, subscriptionData.id);
       console.log('Subscription Data', subscriptionData);
     }
 
   } catch (error) {
-    console.error(`Failed creating a subscription: ${error}`);
-    
+    console.error(`Failed creating a subscription for account ${accountId}:`,error);
   }
 }
 
-const deleteAllSubscriptions = async () => {
+const deleteAllSubscriptions = async (platform, accountId) => {
   try {
     const response = await platform.get('/restapi/v1.0/subscription');
     const subscriptions = await response.json();
@@ -110,15 +110,53 @@ const deleteAllSubscriptions = async () => {
     for(let subscription of subscriptions.records){
       const subscriptionId = subscription.id;
       await platform.delete(`/restapi/v1.0/subscription/${subscriptionId}`);
-      console.log(`Deleted Subscription with ID: ${subscriptionId}`);
+      console.log(`Deleted Subscription for account ${accountId}with ID: ${subscriptionId}`);
     }
-    console.log("All Subscriptions have been deleted.");    
+    console.log(`All Subscriptions have been deleted for account ${accountId}`);    
   } catch (error) {
-    console.log(`Failed to delete subscriptions: ${error}`);
-    
+    console.log(`Failed to delete subscriptions for account ${accountId}:`, error);
   }
 }
 
+const processCallLogs = async (body) =>{
+  for (const {platform, accountId} of platforms){
+    try {
+      const maxAttempts = 20;
+      const delayMs = 5000;
+      console.log(`Processing call logs for account: ${accountId}`);
+      
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        console.log(`Polling Attempt ${attempt}`);
+        const queryParams = {sessionId: body.sessionId};
+        const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`,queryParams);
+        const recordArr = await response.json();
+
+        if(recordArr?.records?.length > 0){
+          const record = recordArr.records[0];
+
+          if(record.duration >= process.env.DURATION){
+            let hubspotInfo;
+              // Check whether it's inbound or outbound
+              if (record.direction === "Inbound") {
+              hubspotInfo = await getHubspotInfo(record.from?.phoneNumber);
+            } else {
+              hubspotInfo = await getHubspotInfo(record.to?.phoneNumber);
+            }
+
+            await uploadFileToSlack(record, platform, hubspotInfo);
+            return;
+          }
+        }else {
+          console.log('Recording metadata is not available or below duration.');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    } catch (error) {
+      console.error(`Error retrieving call logs from RingCentral account: ${accountId}`, error);
+    }
+  }
+}
 
 const get_call_logs = async (body) => {
     try {
@@ -144,10 +182,10 @@ const get_call_logs = async (body) => {
 
             //check whether it's inbound or outbound
             if(record.direction === "Inbound"){
-              console.log(`INBOUND: This is the hubspot info returned from this number ${record.from.phoneNumber}`);
+              console.log(`INBOUND: This is the hubspot info returned from this number ${record.from?.phoneNumber}`);
               hubspotInfo = await getHubspotInfo(record.from.phoneNumber);  // if inbound, use the from attribute 
             }else{
-              console.log(`OUTBOUND: This is the hubspot info returned from this number ${record.to.phoneNumber}`);
+              console.log(`OUTBOUND: This is the hubspot info returned from this number ${record.to?.phoneNumber}`);
               hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
             }
 
@@ -168,7 +206,7 @@ const get_call_logs = async (body) => {
 };
 
 
-loginJWT();
+loginToAllAccounts();
 
 app.listen(port, () =>{
   console.log(`Server is running on port ${port}`);
