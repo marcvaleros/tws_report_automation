@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const express = require('express');
 const { uploadFileToSlack } = require('./slack');
 const { getHubspotInfo } = require('./hubspot_info');
@@ -6,6 +8,10 @@ const cors = require('cors');
 
 //create a server 
 const app = express();
+const router = express.Router();
+const configPath = path.join(__dirname, 'config.json');
+const config = JSON.parse(fs.readFileSync(configPath));
+
 const port = process.env.PORT || 8080;
 app.use(cors());
 

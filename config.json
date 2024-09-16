@@ -1,0 +1,7 @@
+{
+  "RC_ACCOUNTS":[
+    {
+      "server":"https://platform.ringcentral.com","clientId":"1Lk1PSGi9OwboeF1EKcNJ1","clientSecret":"AP9K9Tmgy5Od4sI8Y7P2Jv0sYkUMkHQOYdj0ueCVKTNw","jwt":"eyJraWQiOiI4NzYyZjU5OGQwNTk0NGRiODZiZjVjYTk3ODA0NzYwOCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOiJodHRwczovL3BsYXRmb3JtLnJpbmdjZW50cmFsLmNvbS9yZXN0YXBpL29hdXRoL3Rva2VuIiwic3ViIjoiMjA0Mjc1MzAxOSIsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0ucmluZ2NlbnRyYWwuY29tIiwiZXhwIjozODcyMzk2OTM3LCJpYXQiOjE3MjQ5MTMyOTAsImp0aSI6IkJfRFF0ekVoUTctdVRTYlhjdVpJR3cifQ.Aj1cxwpYjz2tS5wMWjhXyly-V3KNUDKJatjphHPyH1D8UsbIdrH0RF2b6ysHtAeeRm0uwbqr1cVGYZIWFh0dT2aq_eRSIXfKcV_VZKCapWLKRFnu9GGu1l2hmPqR29qiAyUQNLDJt5bGtmSu1rXm6ElXFELTUGA7dS70DUCXIMZhyqYhoDYVkq1_chI9QYlKkzr9VCmhfJdVymjtrYwYJHgmfwB5T9Ijifp86pBCNCJDSAz-gRE-A8E2ATmT4Ddb_HP8nZ61-BxYYzvY6PkQk_AfOistbTSCDmDgLmYEtUGECB8V2SAfUbd-nU-CqE8xLLU4oHjyGssHovwTLXA9hQ"
+      }
+    ]
+}
