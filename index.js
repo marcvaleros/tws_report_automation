@@ -31,8 +31,8 @@ const loginJWT = async () => {
     }).then((r) => console.log("Login Response", r));
 
     platform.on(platform.events.loginSuccess, function(e){
-      deleteAllSubscriptions();
-      // checkAndCreateSubscription();
+      // deleteAllSubscriptions();
+      checkAndCreateSubscription();
     });
 
     return true;
