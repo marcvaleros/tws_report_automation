@@ -36,7 +36,7 @@ const loginToAllAccounts = async () => {
     });
 
     const platform = rcsdk.platform();
-    platforms.push({platform, accountID: account.clientId })
+    platforms.push({platform, accountID: account.clientId})
 
     try {
       await platform.login({jwt: account.jwt});
@@ -73,11 +73,11 @@ app.post('/webhook', async (req,res) => {
 });
 
 app.post('/api/store-credentials', async (req, res) => {
-  const {server, clientId, clientSecret, jwt} = req.body;
+  const {server, clientId, clientSecret, jwt, name} = req.body;
 
-  const query = `INSERT INTO ringcentral_credentials (server, clientId, clientSecret, jwt) VALUES (?,?,?,?)`;
+  const query = `INSERT INTO ringcentral_credentials (server, clientId, clientSecret, jwt, name) VALUES (?,?,?,?)`;
 
-  db.query(query, [server, clientId, clientSecret,jwt], (err) => {
+  db.query(query, [server, clientId, clientSecret,jwt,name], (err) => {
     if(err){
       return res.status(500).send('Error Storing Credentials');
     }

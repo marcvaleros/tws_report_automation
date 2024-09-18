@@ -7,6 +7,7 @@ const ConfigForm = () => {
     clientId: '',
     clientSecret: '',
     jwt: '',
+    name: '',
   });
 
   const handleChange = (e) => {
@@ -29,6 +30,19 @@ const ConfigForm = () => {
       <div className="w-full max-w-lg p-6 bg-white shadow-md rounded-lg">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Update Configuration</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex flex-col">
+            <label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-1">Name:</label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={account.name}
+              onChange={handleChange}
+              className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter Account Name"
+            />
+          </div>
+          
           <div className="flex flex-col">
             <label htmlFor="server" className="text-sm font-semibold text-gray-700 mb-1">Server:</label>
             <input
