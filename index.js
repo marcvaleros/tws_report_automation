@@ -133,7 +133,7 @@ const get_call_logs = async (body) => {
         const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
         const recordArr = await response.json();
   
-        console.log(JSON.stringify(`This is the response json ${JSON.stringify(recordArr,null,1)}`));
+        // console.log(JSON.stringify(`This is the response json ${JSON.stringify(recordArr,null,1)}`));
         
         if (recordArr?.records?.length > 0) {
           const record = recordArr.records[0];
