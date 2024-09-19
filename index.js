@@ -51,7 +51,7 @@ platform.on(platform.events.loginError, function(e){
 app.post('/webhook', (req,res) => {
   const validation_token = req.headers['validation-token'];
 
-  if (validation_token) {                                                   // validation token is only added to headers during webhook setup process
+  if (validation_token) {                                              // validation token is only added to headers during webhook setup process
     res.setHeader('Validation-Token', validation_token);
     res.status(200).send("Validation Token Attached to Headers");                
   } else {                                                                 // acquire the call logs of a specific number
