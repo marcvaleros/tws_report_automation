@@ -156,8 +156,8 @@ const getAssociatedDeal = async (contactID) => {
       });
 
       if(res.data.results.length > 0){
-        if(res.data.results.length === 1){ 
-          const dealID = res.data.results[0].id;          //just one deal - just return it right away
+        if(res.data.results.length === 1){              // if there's just one deal return it right away
+          const dealID = res.data.results[0].id;          
           console.log(`This is the deal ID : ${dealID}`);
           
           const assoc_deal = await axios.get(`${TWS_HUBSPOT_BASE_URL}/crm/v3/objects/deals/${dealID}?properties=dealname`,{
