@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { uploadFileToSlack } = require('./slack');
-const { getHubspotInfo } = require('./hubspot_info');
+const { Worker }  = require('worker_threads');
 
 //create a server 
 const app = express();
@@ -14,48 +13,46 @@ app.get('/', (req, res) => {
 // Middleware to parse JSON request body
 app.use(express.json());
 
+//list of accounts & make sure the number get's formatted before sending/getting to database
 const accounts = [
   { 
-    name:'Zach', 
+    name:'Nathan',
+    ext_id: '812279018',
     jwt:"eyJraWQiOiI4NzYyZjU5OGQwNTk0NGRiODZiZjVjYTk3ODA0NzYwOCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOiJodHRwczovL3BsYXRmb3JtLnJpbmdjZW50cmFsLmNvbS9yZXN0YXBpL29hdXRoL3Rva2VuIiwic3ViIjoiODEyMjc5MDE4IiwiaXNzIjoiaHR0cHM6Ly9wbGF0Zm9ybS5yaW5nY2VudHJhbC5jb20iLCJleHAiOjM4NzQwNjY3MzksImlhdCI6MTcyNjU4MzA5MiwianRpIjoibHQ3aHRKQnNRTU8tVHl3X0U0R2JwUSJ9.fgVvULSnF2kuYtjVX54934XPql0PugUQ9ujcwjk9MyYqq_txlJ4I7lJmh8Wnek-6DlA5oB2-lky29CDO_uirXwgqn1MwwJrYf7AgKEWI1D0ezKiFsuKAN8l0LUev1qckP56hN4milisOKRNzAB2z7B0akVGxXC5ABN_dq5mD6o18X5ifOMnk470O6cSWXnrOp-dMhrIdMIbG6AYsJgF4pqdpYuvReONdD6ZsnNUTQCxbIADdRdKH7UgtWob_XhbSI4YGhFVT9iDpfPtEsnEC3bLVO0Hb4KgclUd2pmhHNmzI19RC5MYAVAfkngaJws2tOYjZhZljSVjPH0g38UuI8g"},
   {
-    name:'Nathan',
+    name:'Zach',
+    ext_id: '2042753019', 
     jwt: 'eyJraWQiOiI4NzYyZjU5OGQwNTk0NGRiODZiZjVjYTk3ODA0NzYwOCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOiJodHRwczovL3BsYXRmb3JtLnJpbmdjZW50cmFsLmNvbS9yZXN0YXBpL29hdXRoL3Rva2VuIiwic3ViIjoiMjA0Mjc1MzAxOSIsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0ucmluZ2NlbnRyYWwuY29tIiwiZXhwIjozODcyMzk2OTM3LCJpYXQiOjE3MjQ5MTMyOTAsImp0aSI6IkJfRFF0ekVoUTctdVRTYlhjdVpJR3cifQ.Aj1cxwpYjz2tS5wMWjhXyly-V3KNUDKJatjphHPyH1D8UsbIdrH0RF2b6ysHtAeeRm0uwbqr1cVGYZIWFh0dT2aq_eRSIXfKcV_VZKCapWLKRFnu9GGu1l2hmPqR29qiAyUQNLDJt5bGtmSu1rXm6ElXFELTUGA7dS70DUCXIMZhyqYhoDYVkq1_chI9QYlKkzr9VCmhfJdVymjtrYwYJHgmfwB5T9Ijifp86pBCNCJDSAz-gRE-A8E2ATmT4Ddb_HP8nZ61-BxYYzvY6PkQk_AfOistbTSCDmDgLmYEtUGECB8V2SAfUbd-nU-CqE8xLLU4oHjyGssHovwTLXA9hQ'
   }
-]
+];
 
+const workers = {};
 
-const RC_SDK = require('@ringcentral/sdk').SDK;
-var rcsdk = new RC_SDK({
-  'server': process.env.RC_SERVER_URL,
-  'clientId': process.env.RC_CLIENT_ID,
-  'clientSecret': process.env.RC_CLIENT_SECRET
-});
+const startPlatformWorker = (account) => {
+  const worker = new Worker('./platformWorker.js', {
+    workerData: account
+  });
 
-var platform = rcsdk.platform();
+  worker.on('message', (message) => {
+    console.log(`Message from worker for ${account.name}:`, message);
+  });
 
-const loginJWT = async () => {
-  try {
-    platform.login({'jwt': process.env.RC_JWT}).then(async function (res) {
-      return await res.json();
-    }).then((r) => console.log("Login Response", r));
+  worker.on('error', (err) => {
+    console.error(`Error from worker for ${account.name}:`, err);
+  });
 
-    platform.on(platform.events.loginSuccess, function(e){
-      // deleteAllSubscriptions();
-      checkAndCreateSubscription();
-    });
+  worker.on('exit', (code) => {
+    console.log(`Worker for ${account.name} exited with code ${code}`);
+    if (code !== 0) {
+      console.log(`Restarting worker for ${account.name}...`);
+      startPlatformWorker(account);
+    }
+  });
 
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
-}
+  workers[account.ext_id] = worker;
+};
 
-platform.on(platform.events.loginError, function(e){
-  console.log("Unable to authenticate to platform. Attempting to Authenticate.", e.message);
-  process.exit(1)
-});
+accounts.forEach(account => startPlatformWorker(account));
 
 
 app.post('/webhook', (req,res) => {
@@ -68,7 +65,12 @@ app.post('/webhook', (req,res) => {
     const reqBody = req.body;
     if(reqBody && reqBody.event.includes('telephony/sessions') && reqBody.body.parties[0].status.code === "Disconnected"){
         console.log(JSON.stringify(reqBody.body,null,2));
-        get_call_logs(reqBody.body)
+        let extensionID = reqBody.body.parties[0].extensionId;
+        if(workers[extensionID]){                                     //trigger a function in the platformWorker and pass down the reqBody
+          workers[extensionID].postMessage({type: 'getCallLogs', body: reqBody.body});
+        }else{
+          console.log(`No worker found for account with extension ID: ${extensionID}`);
+        }
     }
 
     res.status(200).send('OK');
@@ -76,112 +78,6 @@ app.post('/webhook', (req,res) => {
 });
 
 
-const checkAndCreateSubscription = async () => {
-  try {
-    const response = await platform.get('/restapi/v1.0/subscription');
-    const subscriptions = await response.json();
-    console.log(JSON.stringify(subscriptions,null,2));
-    
-    let existingSubscription = subscriptions.records.find(subscription => subscription.deliveryMode.transportType === 'WebHook' && 
-      subscription.deliveryMode.address === `${process.env.REQUEST_URL}/webhook`
-    );
-        
-    if(existingSubscription !== undefined){
-      console.log('Existing Subscription Found: ', existingSubscription.id);
-    } else {
-      const newSubscription = await platform.post('/restapi/v1.0/subscription', {
-        eventFilters: [
-          '/restapi/v1.0/account/~/extension/~/telephony/sessions?statusCode=Disconnected&withRecordings=true'
-        ],
-        deliveryMode: {
-          transportType: 'WebHook',
-          address: `${process.env.REQUEST_URL}/webhook`
-        },
-         expiresIn: 630720000
-      });
-
-      const subscriptionData = await newSubscription.json();
-
-      console.log('New Subscription Created', subscriptionData.id);
-      console.log('Subscription Data', subscriptionData);
-    }
-
-  } catch (error) {
-    console.error(`Failed creating a subscription: ${error}`);
-    
-  }
-}
-
-const deleteAllSubscriptions = async () => {
-  try {
-    const response = await platform.get('/restapi/v1.0/subscription');
-    const subscriptions = await response.json();
-
-    for(let subscription of subscriptions.records){
-      const subscriptionId = subscription.id;
-      await platform.delete(`/restapi/v1.0/subscription/${subscriptionId}`);
-      console.log(`Deleted Subscription with ID: ${subscriptionId}`);
-    }
-    console.log("All Subscriptions have been deleted.");    
-  } catch (error) {
-    console.log(`Failed to delete subscriptions: ${error}`);
-    
-  }
-}
-
-
-const get_call_logs = async (body) => {
-    try {
-      const maxAttempts = 30;
-      const delayMs = 5000;
-  
-      
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        console.log(`Polling Attempt ${attempt}`);
-        
-        const queryParams = { sessionId: body.sessionId };
-        const response = await platform.get(`/restapi/v1.0/account/~/extension/~/call-log`, queryParams);
-        const recordArr = await response.json();
-  
-        // console.log(JSON.stringify(`This is the response json ${JSON.stringify(recordArr,null,1)}`));
-        
-        if (recordArr?.records?.length > 0) {
-          const record = recordArr.records[0];
-  
-          if (record.duration >= process.env.DURATION) {
-            console.log(`contentURI: ${record.recording.contentUri}`);
-            let hubspotInfo;
-
-            //check whether it's inbound or outbound
-            if(record.direction === "Inbound"){
-              console.log(`INBOUND: This is the hubspot info returned from this number ${record.from.phoneNumber}`);
-              hubspotInfo = await getHubspotInfo(record.from.phoneNumber);  // if inbound, use the from attribute 
-            }else{
-              console.log(`OUTBOUND: This is the hubspot info returned from this number ${record.to.phoneNumber}`);
-              hubspotInfo = await getHubspotInfo(record.to.phoneNumber);
-            }
-
-            await uploadFileToSlack(record, platform, hubspotInfo);
-            return;
-          } else {
-            console.log('Recording metadata is not available.');
-          }
-        }
-  
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
-  
-      console.log('Recording metadata is not available after maximum attempts or below required duration.');
-    } catch (error) {
-      console.error('Error retrieving call logs from RingCentral:', error);
-    }
-};
-
-
-loginJWT();
-
 app.listen(port, () =>{
   console.log(`Server is running on port ${port}`);
-})
-
-
+});
