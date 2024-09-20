@@ -73,7 +73,6 @@ app.post('/webhook', (req,res) => {
           console.log(`No worker found for account with extension ID: ${extensionID}`);
         }
     }
-
     res.status(200).send('OK');
   }
 });
@@ -82,3 +81,4 @@ app.post('/webhook', (req,res) => {
 app.listen(port, () =>{
   console.log(`Server is running on port ${port}`);
 });
+

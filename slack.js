@@ -85,8 +85,8 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
   const lead_status = hb?.contact?.properties?.hs_lead_status;
   const assoc_company = hb?.company?.properties?.name;
   const contactID = hb?.contact?.id;
-  const project = hb?.contact?.properties?.project;
- 
+  const project = hb?.project;
+
   const payload = {
     files: [
       {
