@@ -71,7 +71,6 @@ app.post('/webhook', (req,res) => {
           workers[extensionID].postMessage({type: 'getCallLogs', body: reqBody.body});
         }else{
           console.log(`No worker found for account with extension ID: ${extensionID}`);
-           console.log(`This is the new accounts array ${JSON.stringify(accounts,null,1)}`);
         }
     }
 
