@@ -17,11 +17,11 @@ app.use(express.json());
 const accounts = [
   { 
     name:'Nathan',
-    ext_id: '812279018',
+    // ext_id: '812279018',
     jwt:"eyJraWQiOiI4NzYyZjU5OGQwNTk0NGRiODZiZjVjYTk3ODA0NzYwOCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOiJodHRwczovL3BsYXRmb3JtLnJpbmdjZW50cmFsLmNvbS9yZXN0YXBpL29hdXRoL3Rva2VuIiwic3ViIjoiODEyMjc5MDE4IiwiaXNzIjoiaHR0cHM6Ly9wbGF0Zm9ybS5yaW5nY2VudHJhbC5jb20iLCJleHAiOjM4NzQwNjY3MzksImlhdCI6MTcyNjU4MzA5MiwianRpIjoibHQ3aHRKQnNRTU8tVHl3X0U0R2JwUSJ9.fgVvULSnF2kuYtjVX54934XPql0PugUQ9ujcwjk9MyYqq_txlJ4I7lJmh8Wnek-6DlA5oB2-lky29CDO_uirXwgqn1MwwJrYf7AgKEWI1D0ezKiFsuKAN8l0LUev1qckP56hN4milisOKRNzAB2z7B0akVGxXC5ABN_dq5mD6o18X5ifOMnk470O6cSWXnrOp-dMhrIdMIbG6AYsJgF4pqdpYuvReONdD6ZsnNUTQCxbIADdRdKH7UgtWob_XhbSI4YGhFVT9iDpfPtEsnEC3bLVO0Hb4KgclUd2pmhHNmzI19RC5MYAVAfkngaJws2tOYjZhZljSVjPH0g38UuI8g"},
   {
     name:'Zach',
-    ext_id: '2042753019', 
+    // ext_id: '2042753019', 
     jwt: 'eyJraWQiOiI4NzYyZjU5OGQwNTk0NGRiODZiZjVjYTk3ODA0NzYwOCIsInR5cCI6IkpXVCIsImFsZyI6IlJTMjU2In0.eyJhdWQiOiJodHRwczovL3BsYXRmb3JtLnJpbmdjZW50cmFsLmNvbS9yZXN0YXBpL29hdXRoL3Rva2VuIiwic3ViIjoiMjA0Mjc1MzAxOSIsImlzcyI6Imh0dHBzOi8vcGxhdGZvcm0ucmluZ2NlbnRyYWwuY29tIiwiZXhwIjozODcyMzk2OTM3LCJpYXQiOjE3MjQ5MTMyOTAsImp0aSI6IkJfRFF0ekVoUTctdVRTYlhjdVpJR3cifQ.Aj1cxwpYjz2tS5wMWjhXyly-V3KNUDKJatjphHPyH1D8UsbIdrH0RF2b6ysHtAeeRm0uwbqr1cVGYZIWFh0dT2aq_eRSIXfKcV_VZKCapWLKRFnu9GGu1l2hmPqR29qiAyUQNLDJt5bGtmSu1rXm6ElXFELTUGA7dS70DUCXIMZhyqYhoDYVkq1_chI9QYlKkzr9VCmhfJdVymjtrYwYJHgmfwB5T9Ijifp86pBCNCJDSAz-gRE-A8E2ATmT4Ddb_HP8nZ61-BxYYzvY6PkQk_AfOistbTSCDmDgLmYEtUGECB8V2SAfUbd-nU-CqE8xLLU4oHjyGssHovwTLXA9hQ'
   }
 ];
@@ -34,7 +34,12 @@ const startPlatformWorker = (account) => {
   });
 
   worker.on('message', (message) => {
-    console.log(`Message from worker for ${account.name}:`, message);
+    if(message.type === 'extensionID'){
+      workers[message.extensionID] = worker;
+      console.log(`Assigned worker to ${account.name} with Extension ID ${message.extensionID}`);
+    }else{
+      console.log(`Message from worker for ${account.name}:`, message);
+    }
   });
 
   worker.on('error', (err) => {
@@ -48,8 +53,6 @@ const startPlatformWorker = (account) => {
       startPlatformWorker(account);
     }
   });
-
-  workers[account.ext_id] = worker;
 };
 
 accounts.forEach(account => startPlatformWorker(account));
@@ -70,6 +73,7 @@ app.post('/webhook', (req,res) => {
           workers[extensionID].postMessage({type: 'getCallLogs', body: reqBody.body});
         }else{
           console.log(`No worker found for account with extension ID: ${extensionID}`);
+           console.log(`This is the new accounts array ${JSON.stringify(accounts,null,1)}`);
         }
     }
 

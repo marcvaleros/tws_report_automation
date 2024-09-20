@@ -17,7 +17,11 @@ const platform = rcsdk.platform();
 // console.log('Worker Data:', workerData);
 
 platform.login({ jwt: workerData.jwt })
-  .then((res) => {
+  .then(async (res) => {
+    let result = await res.json();
+    let extensionID = result.owner_id
+
+    parentPort.postMessage({type: 'extensionID', extensionID })
     parentPort.postMessage(`${workerData.name} logged in successfully.`);
     manageSubscriptions(platform);
     // deleteAllSubscriptions(platform);
