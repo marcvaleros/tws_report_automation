@@ -79,11 +79,11 @@ app.post('/webhook', (req,res) => {
 });
 
 app.post('/api/store-credentials', async (req, res) => {
-  const {server, clientId, clientSecret, jwt, name} = req.body;
+  const {jwt, name} = req.body;
 
   const query = `INSERT INTO ringcentral_credentials (name, jwt) VALUES (?,?)`;
 
-  db.query(query, [server, clientId, clientSecret,jwt,name], (err) => {
+  db.query(query, [jwt,name], (err) => {
     if(err){
       return res.status(500).send('Error Storing Credentials');
     }
