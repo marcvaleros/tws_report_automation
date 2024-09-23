@@ -52,7 +52,7 @@ const getCompanyInfo = async (companyID) => {
       return null;
     }
   }
-} 
+}
 
 /** Get Associated Company ID via Contact  
  * @returns Company Object 
@@ -79,7 +79,6 @@ const getAssociatedCompany = async (contactID) => {
   
   
 }
-
 
 /** Get Contact Information via Phone Number and return the Contact ID
  * 
@@ -141,7 +140,6 @@ const formatPhone = (phoneNumber) => {
   return countryCodeRemove.replace(/[-() ]/g, '');
 }
 
-
 // Figure out a way to get those contacts that was recently 
 /** Function to get the associated deal of the contact that was returned. */
 const getAssociatedDeal = async (contactID) => {
@@ -169,8 +167,35 @@ const getAssociatedDeal = async (contactID) => {
           // console.log(JSON.stringify(assoc_deal.data,null,1));
           const dealName = assoc_deal.data.properties.dealname;
           return dealName; 
-        }else{
-          return null;                  //many associated deals, get the recent deal
+        }else{                                                        //many associated deals, get the recent deal
+          const assoc_deals = res.data.results.map(deal => ({id : deal.id}));
+          console.log(`Associated Deals of Contact ${contactID}: ${JSON.stringify(assoc_deals,null,1)}`);
+
+          const requestBody = {
+            "properties": [
+              "dealname",
+              "dealstage",
+              "pipeline",
+              "project_id",
+              "hs_lastmodifieddate"
+            ],
+            "inputs":assoc_deals
+          }
+
+          //batch read deals 
+          const batchedDeals = await axios.post(`${TWS_HUBSPOT_BASE_URL}/crm/v3/objects/deals/batch/read`, requestBody, {
+            headers: {
+              'Authorization' : `Bearer ${process.env.HUBSPOT_API_KEY}`,
+              'Content-Type': 'application/json',
+            }
+          });
+
+          const sortedDeals = batchedDeals.data.results.sort((a, b) => {
+            return new Date(b.properties.hs_lastmodifieddate) - new Date(a.properties.hs_lastmodifieddate);
+          });
+
+          const recentlyModifiedDeal = sortedDeals[0]; 
+          return recentlyModifiedDeal.properties.dealname;                  
         }
       }
       
@@ -184,7 +209,6 @@ const getAssociatedDeal = async (contactID) => {
   }
 
 }
-
 
 module.exports = {
   getHubspotInfo

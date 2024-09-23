@@ -86,7 +86,6 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
   const contactID = hb?.contact?.id;
   const project = hb?.project;
 
-  // Create an array of non-empty strings
   const commentParts = [
     member && `Team Member: ${member}`,
     name && `Contact: ${name}`,
