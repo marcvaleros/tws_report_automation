@@ -99,11 +99,20 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
 
   const init_comment = commentParts.join(`\n`);
 
+  const titleParts = [
+    assoc_company && name && `${assoc_company}_${name}.mp3`,
+    !(assoc_company || name) && phone && `Recording ${phone.replace('+1','')}.mp3`,
+  ];
+
+  const filteredParts = titleParts.filter(Boolean)
+
+  const title = filteredParts.length > 0 && titleParts[0] ? titleParts[0] : filteredParts.join('');
+
   const payload = {
     files: [
       {
         id: fileId,
-        title: `${assoc_company ?? 'Unknown'}_${name ?? 'Unknown'}.mp3`,
+        title: title,
       }
     ],
     channel_id: process.env.SLACK_CHANNEL_ID,
