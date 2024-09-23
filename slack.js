@@ -7,10 +7,13 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
   try {
 
     const record = callLogs.recording;
-    console.log(JSON.stringify(record,null,2));   
+    console.log(JSON.stringify(record,null,2));
     
     const url = record.contentUri;
-    const response = await platform.get(url);
+
+    console.log(`This is the url: ${url}`);
+    
+    const response = await platform.get(url);  // error here
     const fileBuffer = await response.buffer();
     const urlArray =  url.split('/');
     const fileName = urlArray[urlArray.length - 2] || `${record.id}.mp3`;
@@ -64,10 +67,6 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
 } 
 
 const completeUploadToSlack = async (fileId, logs, hb) => {
-  // if(hb === null){
-  //   console.log("Unknown number. No Hubspot Account");
-  //   return;
-  // }
   let member;
   let phone;
   
@@ -87,16 +86,37 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
   const contactID = hb?.contact?.id;
   const project = hb?.project;
 
+  const commentParts = [
+    member && `Team Member: ${member}`,
+    name && `Contact: ${name}`,
+    assoc_company && `Company: ${assoc_company}`,
+    lead_status && `Lead Status: ${lead_status}`,
+    project && `Project: ${project}`,
+    contactID && `Hubspot Link: https://app.hubspot.com/contacts/46487044/record/0-1/${contactID ?? 'N/A'}`,
+    phone && `Phone: ${phone}`,
+    duration && `Call Length: ${convertSecsToMins(duration)}`
+  ].filter(Boolean); 
+
+  const init_comment = commentParts.join(`\n`);
+
+  const titleParts = [
+    assoc_company && name && `${assoc_company}_${name}.mp3`,
+    !(assoc_company || name) && phone && `Recording ${phone.replace('+1','')}.mp3`,
+  ];
+
+  const filteredParts = titleParts.filter(Boolean)
+
+  const title = filteredParts.length > 0 && titleParts[0] ? titleParts[0] : filteredParts.join('');
+
   const payload = {
     files: [
       {
         id: fileId,
-        title: `${assoc_company}_${name}.mp3`,
+        title: title,
       }
     ],
     channel_id: process.env.SLACK_CHANNEL_ID,
-    initial_comment:
-    `Team Member: ${member}\nContact: ${name}\nCompany: ${assoc_company}.\nLead Status: ${lead_status}\nProject: ${project}\nHubspot Link: ${'https://app.hubspot.com/contacts/46487044/record/0-1/'+ (contactID || 'N/A')}\nPhone: ${phone}\nCall Length: ${convertSecsToMins(duration)}\n`
+    initial_comment: init_comment
   };
 
   try {
@@ -119,6 +139,8 @@ const convertSecsToMins = (seconds) => {
   const remainingSeconds = seconds % 60;
   return `${minutes} min ${remainingSeconds} sec`;
 }
+
+
 
 module.exports = {
   uploadFileToSlack

@@ -150,3 +150,4 @@ parentPort.on('message', async (msg) => {
 module.exports = {
   get_call_logs
 }
+
