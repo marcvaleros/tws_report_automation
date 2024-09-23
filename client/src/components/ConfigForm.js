@@ -3,9 +3,6 @@ import axios from 'axios';
 
 const ConfigForm = () => {
   const [account, setAccount] = useState({
-    server: '',
-    clientId: '',
-    clientSecret: '',
     jwt: '',
     name: '',
   });
@@ -17,7 +14,8 @@ const ConfigForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/store-credentials', account); // This will be proxied to Node.js backend
+      // console.log(account);
+      await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store-credentials`, account); // This will be proxied to Node.js backend
       alert('Configuration updated successfully!');
     } catch (error) {
       console.error('Error updating configuration', error);

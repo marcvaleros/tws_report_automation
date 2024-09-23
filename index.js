@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { Worker }  = require('worker_threads');
 const db = require('./database');
+const cors = require('cors')
 
 //create a server 
 const app = express();
@@ -12,6 +13,7 @@ app.get('/', (req, res) => {
 });
 
 // Middleware to parse JSON request body
+app.use(cors());
 app.use(express.json());
 
 //list of accounts & make sure the number get's formatted before sending/getting to database
@@ -79,17 +81,21 @@ app.post('/webhook', (req,res) => {
 });
 
 app.post('/api/store-credentials', async (req, res) => {
-  const {jwt, name} = req.body;
+  const {name, jwt} = req.body;
+  console.log(req.body);
+  
+  const query = `INSERT INTO ringcentral_credentials (jwt, name) VALUES (?,?)`;
 
-  const query = `INSERT INTO ringcentral_credentials (name, jwt) VALUES (?,?)`;
-
-  db.query(query, [jwt,name], (err) => {
+  db.query(query, [jwt, name], (err) => {
     if(err){
       return res.status(500).send('Error Storing Credentials');
+    }else{
+      
+      res.status(200).send('Credentials Stored Successfully');
     }
-    res.status(200).send('Credentials Stored Successfully');
   })
 });
+
 
 
 app.listen(port, () =>{
