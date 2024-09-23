@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { Worker }  = require('worker_threads');
+const db = require('./database');
 
 //create a server 
 const app = express();
@@ -75,6 +76,19 @@ app.post('/webhook', (req,res) => {
     }
     res.status(200).send('OK');
   }
+});
+
+app.post('/api/store-credentials', async (req, res) => {
+  const {server, clientId, clientSecret, jwt, name} = req.body;
+
+  const query = `INSERT INTO ringcentral_credentials (name, jwt) VALUES (?,?)`;
+
+  db.query(query, [server, clientId, clientSecret,jwt,name], (err) => {
+    if(err){
+      return res.status(500).send('Error Storing Credentials');
+    }
+    res.status(200).send('Credentials Stored Successfully');
+  })
 });
 
 
