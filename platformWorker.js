@@ -23,8 +23,8 @@ platform.login({ jwt: workerData.jwt })
 
     parentPort.postMessage({type: 'extensionID', extensionID })
     parentPort.postMessage(`${workerData.name} logged in successfully.`);
-    manageSubscriptions(platform);
-    // deleteAllSubscriptions(platform);
+    // manageSubscriptions(platform);
+    deleteAllSubscriptions(platform);
     keepAlive();
   })
   .catch(err => {
