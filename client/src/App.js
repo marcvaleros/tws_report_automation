@@ -1,12 +1,12 @@
 import './App.css';
 import ConfigForm from './components/ConfigForm'
+import UserList from './components/UserList'
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <ConfigForm/>
-      </header>
+        <ConfigForm />
+        <UserList />
     </div>
   );
 }
