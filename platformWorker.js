@@ -97,7 +97,7 @@ const keepAlive = async () => {
 
 const get_call_logs = async (body) => {
   try {
-    const maxAttempts = 30;
+    const maxAttempts = 20;
     const delayMs = 5000; 
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
