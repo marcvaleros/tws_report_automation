@@ -23,8 +23,8 @@ platform.login({ jwt: workerData.jwt })
 
     parentPort.postMessage({type: 'extensionID', extensionID })
     parentPort.postMessage(`${workerData.name} logged in successfully.`);
-    // manageSubscriptions(platform);
-    deleteAllSubscriptions(platform);
+    manageSubscriptions(platform);
+    // deleteAllSubscriptions(platform);
     keepAlive();
   })
   .catch(err => {
@@ -97,7 +97,7 @@ const keepAlive = async () => {
 
 const get_call_logs = async (body) => {
   try {
-    const maxAttempts = 20;
+    const maxAttempts = 15;
     const delayMs = 5000; 
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
