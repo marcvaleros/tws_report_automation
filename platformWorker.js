@@ -14,14 +14,10 @@ const rcsdk = new RC_SDK({
 
 const platform = rcsdk.platform();
 
-// console.log('Worker Data:', workerData);
-
 platform.login({ jwt: workerData.jwt })
   .then(async (res) => {
     let result = await res.json();
-    let extensionID = result.owner_id
-
-    parentPort.postMessage({type: 'extensionID', extensionID })
+    // console.log(result);
     parentPort.postMessage(`${workerData.name} logged in successfully.`);
     manageSubscriptions(platform);
     // deleteAllSubscriptions(platform);
@@ -144,6 +140,8 @@ const get_call_logs = async (body) => {
 parentPort.on('message', async (msg) => {
   if (msg.type === 'getCallLogs') {
     await get_call_logs(msg.body);
+  }else if (msg.type === 'deleteSubscriptions'){
+    await deleteAllSubscriptions(platform);
   }
 });
 
