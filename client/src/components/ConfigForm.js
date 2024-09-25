@@ -32,10 +32,10 @@ const ConfigForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center  min-h-screen bg-gradient-to-b from-darkorange to-coolerorange">
+    <div className="flex justify-center items-center  min-h-screen bg-gradient-to-b from-darkorange to-coolerorange ">
       <div className="w-full max-w-lg p-6 bg-white shadow-md rounded-lg">
         <img src='/ringcentral-blk.png' alt='' width={350} height={350} className='mx-auto'/>
-        <h2 className="text-2xl font-bold mb-6 text-[#007DB8]">Add user to join the party!</h2>
+        <h2 className="text-2xl font-bold mb-6 text-[#007DB8]">Add a user to join the party!</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col">
             <label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-1">Name</label>

@@ -34,40 +34,43 @@ const UserList = () => {
   }
 
   return (
-    <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white mx-2 cursor-pointer">
-      {users?.length > 0 ? (
-          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead className="bg-[#007DB8] text-white uppercase text-[12px] leading-normal">
-              <tr>
-                <th className="py-3 px-6 text-left">ID</th>
-                <th className="py-3 px-6 text-left">Name</th>
-                <th className="py-3 px-6 text-left">Extension ID</th>
-                <th className="py-3 px-6 text-left">JWT</th>
-                <th className="py-3 px-6 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="text-[#007DB8] text-sm font-light">
-              {users.map((user, index) => (
-                <tr key={index} className="border-b border-gray-200 hover:bg-gray-100">
-                  <td className="py-3 px-6 text-left whitespace-nowrap">{user.id}</td>
-                  <td className="py-3 px-6 text-left">{user.name}</td>
-                  <td className="py-3 px-6 text-left">{user.extensionID}</td>
-                  <td className="py-3 px-6 text-left max-w-xs truncate overflow-hidden">{user.jwt}</td>
-                  <td className="py-3 px-6 text-center">
-                    <button 
-                      className="bg-primaryOrange text-white px-4 py-2 rounded-md hover:bg-darkorange transition duration-200"
-                      onClick={() => deleteUser(user.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+    <div className='flex flex-col space-y-4'>
+      <h2 className="text-2xl font-bold pl-2 text-[#007DB8]">Subscribed Users</h2> 
+      <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white mx-2 cursor-pointer">
+        {users?.length > 0 ? (
+            <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+              <thead className="bg-[#007DB8] text-white uppercase text-[12px] leading-normal">
+                <tr>
+                  <th className="py-3 px-6 text-left">ID</th>
+                  <th className="py-3 px-6 text-left">Name</th>
+                  <th className="py-3 px-6 text-left">Extension ID</th>
+                  <th className="py-3 px-6 text-left">JWT</th>
+                  <th className="py-3 px-6 text-center">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-      ) : (
-        <p className="text-center text-gray-500">No Users Found</p>
-      )}
+              </thead>
+              <tbody className="text-[#007DB8] text-sm font-light">
+                {users.map((user, index) => (
+                  <tr key={index} className="border-b border-gray-200 hover:bg-gray-100">
+                    <td className="py-3 px-6 text-left whitespace-nowrap">{user.id}</td>
+                    <td className="py-3 px-6 text-left">{user.name}</td>
+                    <td className="py-3 px-6 text-left">{user.extensionID}</td>
+                    <td className="py-3 px-6 text-left max-w-xs truncate overflow-hidden">{user.jwt}</td>
+                    <td className="py-3 px-6 text-center">
+                      <button
+                        className="bg-primaryOrange text-white px-4 py-2 rounded-md hover:bg-darkorange transition duration-200"
+                        onClick={() => deleteUser(user.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+        ) : (
+          <p className="text-center text-gray-500">No Users Found</p>
+        )}
+      </div>
     </div>
   );
 } 
