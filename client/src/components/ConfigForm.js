@@ -14,9 +14,8 @@ const ConfigForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // console.log(account);
-      await axios.post(`/api/store-credentials`, account); // This will be proxied to Node.js backend
-      // await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store-credentials`, account); // This will be proxied to Node.js backend
+      await axios.post(`/api/store-credentials`, account);
+      // await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store-credentials`, account);
       setAccount({
         jwt: '',
         name: '',
@@ -33,12 +32,13 @@ const ConfigForm = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center  min-h-screen bg-gradient-to-b from-darkorange to-coolerorange">
       <div className="w-full max-w-lg p-6 bg-white shadow-md rounded-lg">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Subscribe to RC Recording Automation</h2>
+        <img src='/ringcentral-blk.png' alt='' width={350} height={350} className='mx-auto'/>
+        <h2 className="text-2xl font-bold mb-6 text-[#007DB8]">Add user to join the party!</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col">
-            <label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-1">Name:</label>
+            <label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-1">Name</label>
             <input
               id="name"
               name="name"
@@ -51,7 +51,7 @@ const ConfigForm = () => {
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="jwt" className="text-sm font-semibold text-gray-700 mb-1">Enter RingCentral JWT:</label>
+            <label htmlFor="jwt" className="text-sm font-semibold text-gray-700 mb-1">RingCentral JWT</label>
             <input
               id="jwt"
               name="jwt"
@@ -65,7 +65,7 @@ const ConfigForm = () => {
 
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full py-2 px-4 bg-[#007DB8] text-white font-semibold rounded-lg shadow-md hover:bg-[#275f79] focus:outline-none focus:ring-2 focus:bg-[#63a4c2] ease-in-out"
           >
             Save Configuration
           </button>

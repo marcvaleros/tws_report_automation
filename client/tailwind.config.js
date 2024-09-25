@@ -4,7 +4,16 @@ module.exports = {
      './src/**/*.{js,jsx,ts,tsx}'
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'poppins': ['"Poppins"', 'sans-serif'],
+      },
+      colors: {
+        darkorange: '#E35903',
+        coolerorange: '#FFA500',
+        primaryOrange: '#F37006',
+      },
+    },
   },
   plugins: [],
 }
