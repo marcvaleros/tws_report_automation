@@ -15,7 +15,8 @@ const ConfigForm = () => {
     e.preventDefault();
     try {
       // console.log(account);
-      await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store-credentials`, account); // This will be proxied to Node.js backend
+      await axios.post(`/api/store-credentials`, account); // This will be proxied to Node.js backend
+      // await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store-credentials`, account); // This will be proxied to Node.js backend
       setAccount({
         jwt: '',
         name: '',
