@@ -16,8 +16,16 @@ const ConfigForm = () => {
     try {
       // console.log(account);
       await axios.post(`${process.env.REACT_APP_BASE_URL}/api/store-credentials`, account); // This will be proxied to Node.js backend
+      setAccount({
+        jwt: '',
+        name: '',
+      });
       alert('Configuration updated successfully!');
     } catch (error) {
+      setAccount({
+        jwt: '',
+        name: '',
+      });
       console.error('Error updating configuration', error);
       alert('Failed to update configuration');
     }

@@ -5,26 +5,29 @@ import axios from 'axios';
 const UserList = () => {
   const [users, setUsers] = useState([]);
 
-  useEffect(() => {
     //do a fetch of all users in the database
-    const fetchUsers = async () => {
-      try {
-        const res = await axios.get(`${process.env.REACT_APP_BASE_URL}/rc/users`);
-        console.log(res.data);
-        setUsers(res.data);
-      } catch (error) {
-        console.log(`Error Fetching Users: ${error}`);
-      }
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(`/rc/users`);
+      // const res = await axios.get(`${process.env.REACT_APP_BASE_URL}/rc/users`);
+      console.log(res.data);
+      setUsers(res.data);
+    } catch (error) {
+      console.log(`Error Fetching Users: ${error}`);
     }
+  }
 
+  useEffect(() => {
     fetchUsers();
   }
   ,[]);
 
   const deleteUser = async (id) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_BASE_URL}/rc/user/${id}`);
+      await axios.delete(`/rc/user/${id}`);
+      // await axios.delete(`${process.env.REACT_APP_BASE_URL}/rc/user/${id}`);
       setUsers(users.filter(user => user.id !== id)); // Remove the deleted user from the list
+      fetchUsers();
     } catch (error) {
       console.log(`Error Deleting User: ${error}`);
     }

@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const { Worker }  = require('worker_threads');
 const RC_SDK = require('@ringcentral/sdk').SDK;
@@ -9,9 +10,7 @@ const cors = require('cors')
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.get('/', (req, res) => {
-  res.send('Automation for TWS with Hubspot and RingCentral! Your server is running.');
-});
+app.use(express.static(path.join(__dirname, 'client/build')))
 
 // Middleware to parse JSON request body
 app.use(cors());
@@ -200,6 +199,11 @@ app.delete('/rc/user/:id', async (req, res) => {
   }
 })
 
+
+// The "catchall" handler: for any request that doesn't match one above, send back the React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.listen(port, async () =>{
   console.log(`Server is running on port ${port}`);
