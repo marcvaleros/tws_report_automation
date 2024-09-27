@@ -137,8 +137,10 @@ const get_call_logs = async (body) => {
   }
 };
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 parentPort.on('message', async (msg) => {
   if (msg.type === 'getCallLogs') {
+    await delay(5000);    
     await get_call_logs(msg.body);
   }else if (msg.type === 'deleteSubscriptions'){
     await deleteAllSubscriptions(platform);

@@ -2,68 +2,100 @@ require('dotenv').config();
 const axios = require('axios');
 const FormData = require('form-data');
 
-
 const uploadFileToSlack = async (callLogs, platform, hb) => {
-  try {
+  let retryCount = 0;
+  const maxRetries = 5;
 
-    const record = callLogs.recording;
-    console.log(JSON.stringify(record,null,2));
-    
-    const url = record.contentUri;
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    console.log(`This is the url: ${url}`);
-    
-    const response = await platform.get(url);  // error here
-    const fileBuffer = await response.buffer();
-    const urlArray =  url.split('/');
-    const fileName = urlArray[urlArray.length - 2] || `${record.id}.mp3`;
-    const size = fileBuffer.length;
-
-    try{
-      const slackRes = await axios.get(`https://slack.com/api/files.getUploadURLExternal?filename=${fileName}&length=${size}`, {
+  while (retryCount < maxRetries) {
+    try {
+      const record = callLogs.recording;
+      console.log(JSON.stringify(record,null,2));
+      
+      const url = record.contentUri;
+  
+      const auth = await platform.auth();
+      const localStorageString = auth._cache._externals.localStorage["rc-platform"];
+      const parsedAuthData = JSON.parse(localStorageString);
+      const accessToken = parsedAuthData.access_token;
+      console.log(accessToken);
+      console.log(`This is the url: ${url}?access_token=${accessToken}`);
+      
+      
+      const response = await axios.get(`${url}?access_token=${accessToken}`, {
+        responseType: 'arraybuffer', // Ensures that the file is fetched as a buffer
         headers: {
-          'Authorization': `Bearer ${process.env.SLACK_TOKEN}`
+          'Authorization': `Bearer ${accessToken}`
         }
       });
-      const slackData = slackRes.data;
-      console.log(JSON.stringify(slackData,null,2));
 
-        if (slackRes.status === 200) {
-          const form = new FormData();
-          form.append('file', fileBuffer, {
-            filename: fileName,
-            contentType: 'audio/mpeg'
-          });
-    
-          const uploadRes = await axios.post(slackData.upload_url, form, {
-            headers: {
-              'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
-              ...form.getHeaders()
-            }
-          });
-    
-          if (uploadRes.status === 200) {
-            console.log(uploadRes.data);
-            await completeUploadToSlack(slackData.file_id, callLogs, hb);
-            console.log('Success ');
-    
-          } else {
-            console.log('Upload Failed');
-          }
-        } else {
-          console.log('Failed to get upload URL');
-        }
-    }catch(e){
-      console.log(e);
-    }
+      console.log(`Successfully Fetched Recording`);
+      
+      const fileBuffer = Buffer.from(response.data); 
+      const urlArray =  url.split('/');
+      const fileName = urlArray[urlArray.length - 2] || `${record.id}.mp3`;
+      const size = fileBuffer.length;
 
-    return true;
+      console.log(fileBuffer);
+      
   
-  } catch (error) {
-    console.error('Error:', error);
-    console.error('Error Msg:', error.message);
-    return false;
+      try{
+        const slackRes = await axios.get(`https://slack.com/api/files.getUploadURLExternal?filename=${fileName}&length=${size}`, {
+          headers: {
+            'Authorization': `Bearer ${process.env.SLACK_TOKEN}`
+          }
+        });
+        const slackData = slackRes.data;
+        console.log(JSON.stringify(slackData,null,2));
+  
+          if (slackRes.status === 200) {
+            const form = new FormData();
+            form.append('file', fileBuffer, {
+              filename: fileName,
+              contentType: 'audio/mpeg'
+            });
+      
+            const uploadRes = await axios.post(slackData.upload_url, form, {
+              headers: {
+                'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
+                ...form.getHeaders()
+              }
+            });
+      
+            if (uploadRes.status === 200) {
+              console.log(uploadRes.data);
+              await completeUploadToSlack(slackData.file_id, callLogs, hb);
+              console.log('Success ');
+      
+            } else {
+              console.log('Upload Failed');
+            }
+          } else {
+            console.log('Failed to get upload URL');
+          }
+      }catch(e){
+        console.log(e);
+      }
+  
+      return true;
+    
+    } catch (error) {
+      console.error('Error Response:', error.response);
+      console.error('Error Message:', error.message);
+
+      if (error.message.includes('Request failed with status code 404')) {
+        retryCount++;
+        console.log(`Retry attempt ${retryCount}/${maxRetries}`);
+        await delay(3000);
+      } else {
+        return false; // For other errors, don't retry
+      }
+    }
   }
+
+  console.log('Max retry attempts reached.');
+  return false;
 } 
 
 const completeUploadToSlack = async (fileId, logs, hb) => {
