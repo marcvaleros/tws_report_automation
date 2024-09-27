@@ -1,12 +1,15 @@
-import ConfigForm from './components/ConfigForm'
-import UserList from './components/UserList'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './page/Home'
+import Tutorial from './page/Tutorial'
 
 function App() {
   return (
-    <div className="font-poppins grid grid-flow-row grid-cols-1 items-center sm:grid-cols-1 lg:grid-cols-2 ">
-        <ConfigForm/>
-        <UserList/>
-    </div>
+    <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/tutorial" element={<Tutorial />} />
+        </Routes>
+    </Router>
   );
 }
 

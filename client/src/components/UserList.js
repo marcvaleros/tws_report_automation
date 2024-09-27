@@ -42,8 +42,8 @@ const UserList = () => {
               <tr>
                 <th className="py-3 px-6 text-left">ID</th>
                 <th className="py-3 px-6 text-left">Name</th>
-                <th className="py-3 px-6 text-left hidden sm:table-cell">Extension ID</th> {/* Hide on mobile */}
-                <th className="py-3 px-6 text-left hidden md:table-cell">JWT</th> {/* Hide on small & medium screens */}
+                <th className="py-3 px-6 text-left hidden sm:table-cell">Extension ID</th>
+                <th className="py-3 px-6 text-left hidden md:table-cell">JWT</th>
                 <th className="py-3 px-6 text-center">Action</th>
               </tr>
             </thead>
@@ -52,8 +52,8 @@ const UserList = () => {
                 <tr key={index} className="border-b border-gray-200 hover:bg-gray-100">
                   <td className="py-3 px-6 text-left whitespace-nowrap">{user.id}</td>
                   <td className="py-3 px-6 text-left">{user.name}</td>
-                  <td className="py-3 px-6 text-left hidden sm:table-cell">{user.extensionID}</td> {/* Hidden on mobile */}
-                  <td className="py-3 px-6 text-left max-w-xs truncate overflow-hidden hidden md:table-cell">{user.jwt}</td> {/* Hidden on small & medium */}
+                  <td className="py-3 px-6 text-left hidden sm:table-cell">{user.extensionID}</td>
+                  <td className="py-3 px-6 text-left max-w-xs truncate overflow-hidden hidden md:table-cell">{user.jwt}</td>
                   <td className="py-3 px-6 text-center">
                     <button
                       className="bg-primaryOrange text-white px-4 py-2 rounded-md hover:bg-darkorange transition duration-200"

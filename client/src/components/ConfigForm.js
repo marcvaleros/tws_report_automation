@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const ConfigForm = () => {
   const [account, setAccount] = useState({
@@ -36,7 +37,7 @@ const ConfigForm = () => {
       <div className="w-full max-w-lg p-6 bg-white shadow-md rounded-lg md:my-2 sm:mx-4">
         <img src='/ringcentral-blk.png' alt='' width={350} height={350} className='mx-auto sm:w-48 md:w-60 lg:w-72'/>
         <h2 className="text-2xl font-bold mb-6 text-[#007DB8] sm:text-lg md:text-xl lg:text-2xl">Add a user to join the party!</h2>
-        <form onSubmit={handleSubmit} className="space-y-4 ">
+        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col">
           <div className="flex flex-col">
             <label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-1 sm:text-xs md:text-sm lg:text-base">Name</label>
             <input
@@ -62,6 +63,8 @@ const ConfigForm = () => {
               placeholder="Enter JWT Credential"
             />
           </div>
+
+          <Link to='/tutorial' className='text-sm text-blue-600 font-medium self-end underline'>Learn about JWT here</Link>
 
           <button
             type="submit"
