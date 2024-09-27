@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 
 function Tutorial() {
   return (
@@ -37,9 +38,9 @@ function Tutorial() {
           <p className="px-4 max-w-sm"><b className="text-primaryOrange">Step 8: </b> Finally, after creating the JWT, copy the JWT token and input it in the RingCentral Automation configuration page.</p>
             <img src='/tutorial/9.png' alt='' width={1000} height={1000}/>
           </li>
-          
-       
         </ul>
+
+        <Link to='/' className='text-2xl bg-primaryOrange font-bold px-6 m-6 text-white rounded-md py-8 animate-bounce'>Go Back to Homepage</Link>
     </div>
   );
 }
