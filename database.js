@@ -9,15 +9,27 @@ const db = mysql.createConnection(process.env.CLEARDB_DATABASE_URL);
   //   database: process.env.DB_NAME,
   // });
 
+function handleDisconnect (){
+  db.connect((err) => {
+    if(err){
+      console.error('Error Connecting to MySQL:', err);
+      setTimeout(handleDisconnect,2000); 
+    }else{
+      console.log('Connected to MySQL Database');
+    }
+  });
 
+  db.on('error', function(err) {
+    console.log('Database Error', err);
+    if(err.code === 'PROTOCOL_CONNECTION_LOST'){
+      handleDisconnect();
+    }else{
+      throw err;
+    }
+  })
+}
 
-db.connect((err) => {
-  if(err){
-    console.error('Error Connecting to MySQL:', err);
-    return;
-  }
-  console.log('Connected to MySQL');
+handleDisconnect();
 
-})
 
 module.exports = db;
