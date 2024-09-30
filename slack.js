@@ -19,7 +19,6 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
       const localStorageString = auth._cache._externals.localStorage["rc-platform"];
       const parsedAuthData = JSON.parse(localStorageString);
       const accessToken = parsedAuthData.access_token;
-      console.log(accessToken);
       console.log(`This is the url: ${url}?access_token=${accessToken}`);
       
       
@@ -81,7 +80,6 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
       return true;
     
     } catch (error) {
-      console.error('Error Response:', error.response);
       console.error('Error Message:', error.message);
 
       if (error.message.includes('Request failed with status code 404')) {
