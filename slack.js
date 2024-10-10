@@ -97,24 +97,21 @@ const uploadFileToSlack = async (callLogs, platform, hb) => {
 } 
 
 const completeUploadToSlack = async (fileId, logs, hb) => {
-  let member;
-  let phone;
-  
-  if(logs.direction === "Inbound"){
-    member = logs.to.name;
-    phone = logs.from.phoneNumber;
-  }else{
-    member = logs.from.name;
-    phone = logs.to.phoneNumber;
+  const {direction, to, from, duration} = logs;
+  let member,phone,name,lead_status,assoc_company,contactID,project;
+
+  member = direction === "Inbound" ? to.name : from.name;
+  phone = direction === "Inbound" ? from.phoneNumber : to.phoneNumber;
+
+  // Apply HubSpot details only if the member is Zach Lam
+  if(member === 'Zach Lam'){
+    const {contact, company} = hb || {};
+    name = contact?.properties?.firstname;
+    lead_status = contact?.properties?.hs_lead_status;
+    assoc_company = company?.properties?.name;
+    contactID = contact?.id;
+    project = hb?.project;
   }
-
-  const duration = logs.duration;
-
-  const name = hb?.contact?.properties?.firstname;
-  const lead_status = hb?.contact?.properties?.hs_lead_status;
-  const assoc_company = hb?.company?.properties?.name;
-  const contactID = hb?.contact?.id;
-  const project = hb?.project;
 
   const commentParts = [
     member && `Team Member: ${member}`,
@@ -125,9 +122,7 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
     contactID && `Hubspot Link: https://app.hubspot.com/contacts/46487044/record/0-1/${contactID ?? 'N/A'}`,
     phone && `Phone: ${phone}`,
     duration && `Call Length: ${convertSecsToMins(duration)}`
-  ].filter(Boolean); 
-
-  const init_comment = commentParts.join(`\n`);
+  ].filter(Boolean).join(`\n`);
 
   const titleParts = [
     assoc_company && name && `${assoc_company}_${name}.mp3`,
@@ -146,7 +141,7 @@ const completeUploadToSlack = async (fileId, logs, hb) => {
       }
     ],
     channel_id: process.env.SLACK_CHANNEL_ID,
-    initial_comment: init_comment
+    initial_comment: commentParts
   };
 
   try {
