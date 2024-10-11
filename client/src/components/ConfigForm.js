@@ -47,12 +47,12 @@ const ConfigForm = () => {
               value={account.name}
               onChange={handleChange}
               className="border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter Account Name"
+              placeholder="Enter First Name"
             />
           </div>
 
           <div className="flex flex-col">
-            <label htmlFor="jwt" className="text-sm font-semibold text-gray-700 mb-1 sm:text-xs md:text-sm lg:text-base">RingCentral JWT</label>
+            <label htmlFor="jwt" className="text-sm font-semibold text-gray-700 mb-1 sm:text-xs md:text-sm lg:text-base">RingCentral JWT Token</label>
             <input
               id="jwt"
               name="jwt"
@@ -64,7 +64,14 @@ const ConfigForm = () => {
             />
           </div>
 
-          <Link to='/tutorial' className='text-sm text-blue-600 font-medium self-end underline'>Learn about JWT here</Link>
+          <div>
+            <p className='font-bold text-orange-500 text-md'>Steps to get you started:</p>
+            <p className=' text-[12px]'>1. Obtain the JWT credential from RingCentral following the provided instructions: <Link to='/tutorial' className='text-[12px] text-blue-600 font-medium self-end underline'>How to get the JWT credential in RingCentral.</Link></p>
+            <p className=' text-[12px]'>2. Enter your first name and the JWT token in the form above.</p>
+            <p className=' text-[12px]'>3. Refresh the page and confirm your name appears in the table on the right.</p>
+            <p className=' text-[12px]'>4. Make test calls in the RingCentral App for over 2 minutes to verify integration success.</p>
+            
+          </div>
 
           <button
             type="submit"
