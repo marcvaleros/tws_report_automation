@@ -66,11 +66,11 @@ const ConfigForm = () => {
 
           <div>
             <p className='font-bold text-orange-500 text-md'>Steps to get you started:</p>
-            <p className=' text-[12px]'>1. Obtain the JWT credential from RingCentral following the provided instructions: <Link to='/tutorial' className='text-[12px] text-blue-600 font-medium self-end underline'>How to get the JWT credential in RingCentral.</Link></p>
-            <p className=' text-[12px]'>2. Enter your first name and the JWT token in the form above.</p>
-            <p className=' text-[12px]'>3. Refresh the page and confirm your name appears in the table on the right.</p>
-            <p className=' text-[12px]'>4. Make test calls in the RingCentral App for over 2 minutes to verify integration success.</p>
-            
+            <p className=' text-[12px]'>1. Register your email in the Zachomatic website which can be accessed here <a href="https://react-tws-hubspot-fe-b3d36e68376c.herokuapp.com/magic-link-request" target='_blank' rel="noreferrer" className='text-[12px] text-blue-600 font-medium self-end underline'>Zachomatic</a></p>
+            <p className=' text-[12px]'>2. Obtain the JWT credential from RingCentral following the provided instructions: <Link to='/tutorial' className='text-[12px] text-blue-600 font-medium self-end underline'>How to get the JWT credential in RingCentral.</Link></p>
+            <p className=' text-[12px]'>3. Select your email from the dropdown, fill up your first name and the JWT token in the form above.</p>
+            <p className=' text-[12px]'>4. Refresh the page and confirm your name appears in the table on the right.</p>
+            <p className=' text-[12px]'>5. Make test calls in the RingCentral App for over 2 minutes to verify integration success.</p>
           </div>
 
           <button
